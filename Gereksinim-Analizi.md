@@ -1,36 +1,28 @@
-# Gereksinim Analizi
-
-Tüm gereksinimlerinizi çıkardıktan sonra beraber tartışıyoruz ve son gereksinimlerin isimlerini hangi API metoduna karşılık geleceğini ve kısa açıklamalarını buraya numaralı bir şekilde yazıyorsunuz. Daha sonra aşağıya herkes kendi gereksinimiyle ilgili sayfayı oluşturmalı ve kendi sayfasında kendine ait gereksinimleri numaralı bir şekilde listeleyerek her bir gereksinimin açıklamalarını yazmalı. Toplamda grup üyesi sayısı kadar sayfa oluşturulmalı. Her grup üyesine eşit sayıda gereksinim atanmalı.
-
-## Gereksinim Sayıları (En Az)
-
-- **1 Kişi:** 10 gereksinim
-- **2 Kişi:** 16 gereksinim
-- **3 Kişi:** 21 gereksinim
-- **4 Kişi:** 24 gereksinim
-- **5 Kişi:** 30 gereksinim
-
-## Gereksinimlerde Uyulması Gereken Kurallar
-
-1. **İsimler anlamlı olmalı:** Gereksinim isimleri net ve anlaşılır olmalıdır.
-2. **Açıklamalar net olmalı:** Her gereksinimin açıklaması açık ve anlaşılır şekilde yazılmalıdır.
-3. **Açıklamalar teknik jargon ve kısaltmalar içermemeli:** Gereksinim açıklamaları herkesin anlayabileceği basit bir dille yazılmalıdır.
-4. **Gereksinim isimleri çok uzun olmamalı ve bir eylem bildirmeli:** 
-   - İsimler kısa ve öz olmalıdır
-   - Bir eylem fiili içermelidir
-   - Örnekler: "Kayıt Olma", "Giriş Yapma", "Profil Güncelleme", "Hesap Silme"
 
 # Tüm Gereksinimler 
 
-1. **Giriş Yapma** (Ali Tutar)
-2. **Üye Olma** (Ali Tutar)
-3. ..
-4. ..
+1. **Giriş Yapma** (Selin Pire)
+2. **Üye Olma** (Selin Pire)
+3. **Çıkış Yapma** (Selin Pire)
+4. **Profil Görüntüleme**(Selin Pire)
+5. **Profil Güncelleme** (Selin Pire)
+6. **Tarif Ekleme** (Sude Koçak)
+7. **Tarif Listeleme** (Sude Koçak)
+8. **Tarif Detay Görüntüleme** (Sude Koçak)
+9. **Tarif Güncelleme** (Sude Koçak)
+10. **Tarif Silme** (Sude Koçak)
+11. **Tarif Arama** (Sude Koçak)
+12. **Kategoriye Göre Listeleme** (Sude Koçak)
+13. **Favorilere Ekleme** (Sude Koçak)
+14. **Favorilere Listeleme** (Selin Pire)
+15. **Yorum ekleme** (Sude Koçak)
+16. **Yorum Silme** (Selin Pire)
+17. **Video Ekleme** (Sude Koçak)
+18. **Video Silme** (Selin Pire)
+19. **Puanlama Sistemi** (Selin Pire)
+20. **Kalori Hesabı (Yapay Zeka)** (Selin Pire)
+
 # Gereksinim Dağılımları
 
-1. [Ali Tutar'ın Gereksinimleri](Ali-Tutar/Ali-Tutar-Gereksinimler.md)
-2. [Grup Üyesi 2'nin Gereksinimleri](Grup-Uyesi-2/Grup-Uyesi-2-Gereksinimler.md)
-3. [Grup Üyesi 3'ün Gereksinimleri](Grup-Uyesi-3/Grup-Uyesi-3-Gereksinimler.md)
-4. [Grup Üyesi 4'ün Gereksinimleri](Grup-Uyesi-4/Grup-Uyesi-4-Gereksinimler.md)
-5. [Grup Üyesi 5'in Gereksinimleri](Grup-Uyesi-5/Grup-Uyesi-5-Gereksinimler.md)
-6. [Grup Üyesi 6'nın Gereksinimleri](Grup-Uyesi-6/Grup-Uyesi-6-Gereksinimler.md)
+1. [Selin Pire'ın Gereksinimleri](SelinPire/SelinPire-Gereksinimler.md)
+2. [Sude Koçak'ın Gereksinimleri]()
