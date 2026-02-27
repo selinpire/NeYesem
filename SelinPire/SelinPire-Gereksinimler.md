@@ -1,3 +1,5 @@
+##  Selin Pire'nin Gereksinimleri
+
 1. **Giriş Yapma**
    - **API Metodu:** `POST /auth/login`
    - **Açıklama:** Kullanıcıların email ve şifre bilgileri ile sisteme giriş yapmasını sağlar. Doğrulama başarılı olduğunda kullanıcıya oturum (JWT) oluşturulur.

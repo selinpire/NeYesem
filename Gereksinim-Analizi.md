@@ -25,4 +25,4 @@
 # Gereksinim Dağılımları
 
 1. [Selin Pire'ın Gereksinimleri](SelinPire/SelinPire-Gereksinimler.md)
-2. [Sude Koçak'ın Gereksinimleri]()
+2. [Sude Koçak'ın Gereksinimleri](SudeKocak/SudeKocak-Gereksinimler.md)
