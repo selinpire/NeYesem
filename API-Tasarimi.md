@@ -1,796 +1,1121 @@
-# API Tasarımı - OpenAPI Specification Örneği
+# API Tasarımı - OpenAPI Specification (NeYesem)
 
-**OpenAPI Spesifikasyon Dosyası:** [lamine.yaml](lamine.yaml)
+**OpenAPI Spesifikasyon Dosyası:** [Neyesem.yaml](Neyesem.yaml)
 
-Bu doküman, OpenAPI Specification (OAS) 3.0 standardına göre hazırlanmış örnek bir API tasarımını içermektedir.
+Bu doküman, NeYesem platformu için OpenAPI Specification (OAS) 3.0 standardına göre hazırlanmış API tasarımını içermektedir.
 
 ## OpenAPI Specification
 
 ```yaml
 openapi: 3.0.3
 info:
-  title: E-Ticaret API
-  description: |
-    E-ticaret platformu için RESTful API.
-    
-    ## Özellikler
-    - Kullanıcı yönetimi
-    - Ürün katalog yönetimi
-    - Sipariş işlemleri
-    - JWT tabanlı kimlik doğrulama
+  title: NeYesem Tarif ve Kullanıcı Yönetim API'si
   version: 1.0.0
+  description: >
+    Bu API, NeYesem platformunda kullanıcı kimlik doğrulama (JWT),
+    tarif yönetimi, yorumlar, favoriler, puanlama, video içerikleri ve
+    yapay zeka destekli kalori hesaplama işlemleri için tasarlanmış RESTful servistir.
+    Temel CRUD işlemlerini destekler ve uç noktalar JWT tabanlı kimlik doğrulama ile korunur.
   contact:
-    name: API Destek Ekibi
-    email: api-support@yazmuh.com
-    url: https://api.yazmuh.com/support
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: NeYesem Team
+    email: neyesem@example.com
 
 servers:
-  - url: https://api.yazmuh.com/v1
-    description: Production server
-  - url: https://staging-api.yazmuh.com/v1
-    description: Staging server
-  - url: http://localhost:3000/v1
-    description: Development server
+  - url: https://api.vercel.com
+    description: Üretim sunucusu (Production)
+  - url: https://staging-api.vercel.com
+    description: Test sunucusu (Staging)
+  - url: https://localhost:3000
+    description: Yerel geliştirme sunucusu (Development)
 
 tags:
-  - name: users
-    description: Kullanıcı yönetimi işlemleri
-  - name: products
-    description: Ürün katalog işlemleri
-  - name: orders
-    description: Sipariş işlemleri
-  - name: auth
-    description: Kimlik doğrulama işlemleri
+  - name: Kimlik Doğrulama
+    description: Login, register ve logout işlemleri
+  - name: Kullanıcılar
+    description: Profil görüntüleme ve güncelleme işlemleri
+  - name: Tarifler
+    description: Tarif oluşturma, listeleme, güncelleme, silme ve arama işlemleri
+  - name: Yorumlar
+    description: Tarif yorumları oluşturma ve silme işlemleri
+  - name: Favoriler
+    description: Favori tarifleri listeleme ve favorilere ekleme işlemleri
+  - name: Puanlama
+    description: Tariflere 1-5 arası puan verme işlemleri
+  - name: Videolar
+    description: Tarif videoları ekleme ve silme işlemleri
+  - name: Yapay Zeka
+    description: Tarif içeriğinden tahmini kalori hesabı
+
+security:
+  - BearerAuth: []
 
 paths:
-  /auth/register:
-    post:
-      tags:
-        - auth
-      summary: Yeni kullanıcı kaydı
-      description: Sisteme yeni bir kullanıcı kaydeder
-      operationId: registerUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserRegistration'
-            examples:
-              example1:
-                summary: Örnek kullanıcı kaydı
-                value:
-                  email: kullanici@example.com
-                  password: Guvenli123!
-                  firstName: Ahmet
-                  lastName: Yılmaz
-      responses:
-        '201':
-          description: Kullanıcı başarıyla oluşturuldu
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          description: Email adresi zaten kullanımda
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
   /auth/login:
     post:
       tags:
-        - auth
-      summary: Kullanıcı girişi
-      description: Email ve şifre ile giriş yapar, JWT token döner
-      operationId: loginUser
+        - Kimlik Doğrulama
+      summary: Kullanıcı Girişi
+      operationId: login
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginCredentials'
+              $ref: "#/components/schemas/LoginInput"
       responses:
-        '200':
-          description: Giriş başarılı
+        "200":
+          description: Giriş başarılı, JWT üretildi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthToken'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Email/şifre hatalı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-  /users:
-    get:
+  /auth/register:
+    post:
       tags:
-        - users
-      summary: Kullanıcı listesi
-      description: Sistemdeki tüm kullanıcıları listeler (sayfalama ile)
-      operationId: listUsers
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-        - name: role
-          in: query
-          description: Kullanıcı rolüne göre filtrele
-          schema:
-            type: string
-            enum: [admin, user, guest]
+        - Kimlik Doğrulama
+      summary: Üye Olma
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
       responses:
-        '200':
-          description: Başarılı
+        "201":
+          description: Kullanıcı oluşturuldu
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserList'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Bu email zaten kayıtlı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/logout:
+    post:
+      tags:
+        - Kimlik Doğrulama
+      summary: Çıkış Yapma
+      operationId: logout
+      responses:
+        "200":
+          description: Oturum sonlandırıldı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: Kullanıcının benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "usr123"
+
     get:
       tags:
-        - users
-      summary: Kullanıcı detayı
-      description: Belirli bir kullanıcının detay bilgilerini getirir
-      operationId: getUserById
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
+        - Kullanıcılar
+      summary: Profil Görüntüleme
+      operationId: getUserProfile
       responses:
-        '200':
-          description: Başarılı
+        "200":
+          description: Profil başarıyla getirildi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Yetkisiz erişim (başkasının profili)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Kullanıcı bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
     put:
       tags:
-        - users
-      summary: Kullanıcı güncelle
-      description: Kullanıcı bilgilerini günceller
-      operationId: updateUser
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
+        - Kullanıcılar
+      summary: Profil Güncelleme
+      operationId: updateUserProfile
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserUpdate'
+              $ref: "#/components/schemas/UserUpdateInput"
       responses:
-        '200':
-          description: Kullanıcı başarıyla güncellendi
+        "200":
+          description: Profil başarıyla güncellendi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Yetkisiz işlem (başkasını güncelleme)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Kullanıcı bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /recipes:
+    get:
+      tags:
+        - Tarifler
+      summary: Tarif Listeleme
+      operationId: listRecipes
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Sayfa numarası (varsayılan 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          description: Sayfa başına sonuç sayısı (varsayılan 10, maksimum 50)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
+      responses:
+        "200":
+          description: Tarifler başarıyla listelendi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recipe"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      tags:
+        - Tarifler
+      summary: Tarif Ekleme
+      operationId: addRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeInput"
+      responses:
+        "201":
+          description: Tarif başarıyla oluşturuldu
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /recipes/{recipeId}:
+    parameters:
+      - name: recipeId
+        in: path
+        required: true
+        description: Tarifin benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "rcp123"
+
+    get:
+      tags:
+        - Tarifler
+      summary: Tarif Detay Görüntüleme
+      operationId: getRecipe
+      responses:
+        "200":
+          description: Tarif başarıyla getirildi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Tarif bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      tags:
+        - Tarifler
+      summary: Tarif Güncelleme
+      operationId: updateRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecipeInput"
+      responses:
+        "200":
+          description: Tarif başarıyla güncellendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recipe"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Bu işlem için yetkiniz yok (tarif sahibi değil)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Tarif bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
     delete:
       tags:
-        - users
-      summary: Kullanıcı sil
-      description: Kullanıcıyı sistemden siler
-      operationId: deleteUser
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/UserIdParam'
+        - Tarifler
+      summary: Tarif Silme
+      operationId: deleteRecipe
       responses:
-        '204':
-          description: Kullanıcı başarıyla silindi
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "204":
+          description: Tarif başarıyla silindi
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Bu işlem için yetkiniz yok (tarif sahibi değil)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Tarif bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-  /products:
+  /recipes/search:
     get:
       tags:
-        - products
-      summary: Ürün listesi
-      description: Tüm ürünleri listeler
-      operationId: listProducts
+        - Tarifler
+      summary: Tarif Arama
+      operationId: searchRecipes
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
-        - name: category
+        - name: q
           in: query
-          description: Kategoriye göre filtrele
+          required: true
+          description: Arama kelimesi
           schema:
             type: string
-        - name: minPrice
+          example: "tavuk"
+        - name: page
           in: query
-          description: Minimum fiyat
+          required: false
+          description: Sayfa numarası (varsayılan 1)
           schema:
-            type: number
-            format: float
-        - name: maxPrice
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: limit
           in: query
-          description: Maximum fiyat
+          required: false
+          description: Sayfa başına sonuç sayısı (varsayılan 10, maksimum 50)
           schema:
-            type: number
-            format: float
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
       responses:
-        '200':
-          description: Başarılı
+        "200":
+          description: Arama sonuçları getirildi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductList'
-    
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recipe"
+        "400":
+          description: Geçersiz arama parametresi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /recipes/category:
+    get:
+      tags:
+        - Tarifler
+      summary: Kategoriye Göre Listeleme
+      operationId: listRecipesByCategory
+      parameters:
+        - name: category
+          in: query
+          required: true
+          description: Kategori adı
+          schema:
+            type: string
+          example: "Tatlı"
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        "200":
+          description: Kategoriye ait tarifler listelendi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recipe"
+        "400":
+          description: Geçersiz kategori
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /favorites:
+    get:
+      tags:
+        - Favoriler
+      summary: Favorileri Listeleme
+      operationId: listFavorites
+      responses:
+        "200":
+          description: Favoriler listelendi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recipe"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /favorites/{recipeId}:
+    parameters:
+      - name: recipeId
+        in: path
+        required: true
+        description: Favoriye eklenecek tarifin kimliği
+        schema:
+          type: string
+        example: "rcp123"
+
     post:
       tags:
-        - products
-      summary: Yeni ürün ekle
-      description: Sisteme yeni bir ürün ekler
-      operationId: createProduct
-      security:
-        - bearerAuth: []
+        - Favoriler
+      summary: Favorilere Ekleme
+      operationId: addToFavorites
+      responses:
+        "200":
+          description: Tarif favorilere eklendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Tarif bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Tarif zaten favorilerde
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /comments:
+    post:
+      tags:
+        - Yorumlar
+      summary: Yorum Ekleme
+      operationId: addComment
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductCreate'
+              $ref: "#/components/schemas/CommentInput"
       responses:
-        '201':
-          description: Ürün başarıyla oluşturuldu
+        "201":
+          description: Yorum başarıyla eklendi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: "#/components/schemas/Comment"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Tarif bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-  /products/{productId}:
-    get:
-      tags:
-        - products
-      summary: Ürün detayı
-      description: Belirli bir ürünün detay bilgilerini getirir
-      operationId: getProductById
-      parameters:
-        - $ref: '#/components/parameters/ProductIdParam'
-      responses:
-        '200':
-          description: Başarılı
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Product'
-        '404':
-          $ref: '#/components/responses/NotFound'
+  /comments/{commentId}:
+    parameters:
+      - name: commentId
+        in: path
+        required: true
+        description: Yorumun benzersiz kimlik numarası
+        schema:
+          type: string
+        example: "cmt456"
 
-  /orders:
-    get:
+    delete:
       tags:
-        - orders
-      summary: Sipariş listesi
-      description: Kullanıcının siparişlerini listeler
-      operationId: listOrders
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/LimitParam'
+        - Yorumlar
+      summary: Yorum Silme
+      operationId: deleteComment
       responses:
-        '200':
-          description: Başarılı
+        "204":
+          description: Yorum başarıyla silindi
+        "401":
+          description: Token eksik veya geçersiz
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OrderList'
-    
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Bu işlem için yetkiniz yok (yorum sahibi değil)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Yorum bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /ratings:
     post:
       tags:
-        - orders
-      summary: Yeni sipariş oluştur
-      description: Yeni bir sipariş oluşturur
-      operationId: createOrder
-      security:
-        - bearerAuth: []
+        - Puanlama
+      summary: Tarif Puanlama
+      operationId: rateRecipe
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderCreate'
+              $ref: "#/components/schemas/RatingInput"
       responses:
-        '201':
-          description: Sipariş başarıyla oluşturuldu
+        "200":
+          description: Puan verildi
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Order'
+                $ref: "#/components/schemas/Rating"
+        "400":
+          description: Geçersiz puan (1-5 olmalı) veya veri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Tarif bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Kullanıcı bu tarife zaten puan vermiş
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /videos:
+    post:
+      tags:
+        - Videolar
+      summary: Video Ekleme
+      operationId: addVideo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoInput"
+      responses:
+        "201":
+          description: Video başarıyla eklendi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Video"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Tarif bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /videos/{videoId}:
+    parameters:
+      - name: videoId
+        in: path
+        required: true
+        description: Video kimliği
+        schema:
+          type: string
+        example: "vid789"
+
+    delete:
+      tags:
+        - Videolar
+      summary: Video Silme
+      operationId: deleteVideo
+      responses:
+        "204":
+          description: Video başarıyla silindi
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Bu işlem için yetkiniz yok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Video bulunamadı
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /ai/calorie-calculation:
+    post:
+      tags:
+        - Yapay Zeka
+      summary: Kalori Hesaplama (Yapay Zeka)
+      operationId: calorieCalculation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalorieCalcInput"
+      responses:
+        "200":
+          description: Tahmini kalori hesabı döndürüldü
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalorieCalcResponse"
+        "400":
+          description: Geçersiz istek verisi
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Token eksik veya geçersiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT token ile kimlik doğrulama
-
-  parameters:
-    UserIdParam:
-      name: userId
-      in: path
-      required: true
-      description: Kullanıcı ID'si
-      schema:
-        type: string
-        format: uuid
-    
-    ProductIdParam:
-      name: productId
-      in: path
-      required: true
-      description: Ürün ID'si
-      schema:
-        type: string
-        format: uuid
-    
-    PageParam:
-      name: page
-      in: query
-      description: Sayfa numarası
-      schema:
-        type: integer
-        minimum: 1
-        default: 1
-    
-    LimitParam:
-      name: limit
-      in: query
-      description: Sayfa başına kayıt sayısı
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
+    BearerAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'JWT tabanlı kimlik doğrulama. "Authorization: Bearer <token>"'
 
   schemas:
-    User:
+    Message:
       type: object
+      properties:
+        message:
+          type: string
+          example: "İşlem başarılı"
       required:
-        - id
-        - email
-        - firstName
-        - lastName
-        - role
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Kullanıcı benzersiz kimliği
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        email:
-          type: string
-          format: email
-          description: Kullanıcı email adresi
-          example: "kullanici@example.com"
-        firstName:
-          type: string
-          description: Ad
-          example: "Ahmet"
-        lastName:
-          type: string
-          description: Soyad
-          example: "Yılmaz"
-        role:
-          type: string
-          enum: [admin, user, guest]
-          description: Kullanıcı rolü
-          example: "user"
-        createdAt:
-          type: string
-          format: date-time
-          description: Oluşturulma tarihi
-          example: "2024-01-15T10:30:00Z"
-        updatedAt:
-          type: string
-          format: date-time
-          description: Güncellenme tarihi
-          example: "2024-01-20T14:45:00Z"
-        phone:
-          type: string
-          description: Telefon numarası
-          example: "+905551234567"
-
-    UserRegistration:
-      type: object
-      required:
-        - email
-        - password
-        - firstName
-        - lastName
-      properties:
-        email:
-          type: string
-          format: email
-          example: "kullanici@example.com"
-        password:
-          type: string
-          format: password
-          minLength: 8
-          example: "Guvenli123!"
-        firstName:
-          type: string
-          minLength: 2
-          example: "Ahmet"
-        lastName:
-          type: string
-          minLength: 2
-          example: "Yılmaz"
-
-    UserUpdate:
-      type: object
-      properties:
-        firstName:
-          type: string
-          minLength: 2
-          example: "Ahmet"
-        lastName:
-          type: string
-          minLength: 2
-          example: "Yılmaz"
-        email:
-          type: string
-          format: email
-          example: "yeniemail@example.com"
-        phone:
-          type: string
-          description: Telefon numarası
-          example: "+905551234567"
-
-    LoginCredentials:
-      type: object
-      required:
-        - email
-        - password
-      properties:
-        email:
-          type: string
-          format: email
-          example: "kullanici@example.com"
-        password:
-          type: string
-          format: password
-          example: "Guvenli123!"
-
-    AuthToken:
-      type: object
-      required:
-        - token
-        - expiresIn
-        - user
-      properties:
-        token:
-          type: string
-          description: JWT access token
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        expiresIn:
-          type: integer
-          description: Token geçerlilik süresi (saniye)
-          example: 3600
-        user:
-          $ref: '#/components/schemas/User'
-
-    Product:
-      type: object
-      required:
-        - id
-        - name
-        - price
-        - category
-        - stock
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: "987e6543-e21b-12d3-a456-426614174000"
-        name:
-          type: string
-          description: Ürün adı
-          example: "Laptop"
-        description:
-          type: string
-          description: Ürün açıklaması
-          example: "15.6 inç, 16GB RAM, 512GB SSD"
-        price:
-          type: number
-          format: float
-          description: Ürün fiyatı (TL)
-          example: 25999.99
-        category:
-          type: string
-          description: Ürün kategorisi
-          example: "Elektronik"
-        stock:
-          type: integer
-          description: Stok miktarı
-          example: 50
-        imageUrl:
-          type: string
-          format: uri
-          description: Ürün görseli URL'i
-          example: "https://example.com/images/laptop.jpg"
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    ProductCreate:
-      type: object
-      required:
-        - name
-        - price
-        - category
-        - stock
-      properties:
-        name:
-          type: string
-          minLength: 3
-        description:
-          type: string
-        price:
-          type: number
-          format: float
-          minimum: 0
-        category:
-          type: string
-        stock:
-          type: integer
-          minimum: 0
-        imageUrl:
-          type: string
-          format: uri
-
-    Order:
-      type: object
-      required:
-        - id
-        - userId
-        - items
-        - totalAmount
-        - status
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        userId:
-          type: string
-          format: uuid
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderItem'
-        totalAmount:
-          type: number
-          format: float
-          description: Toplam tutar (TL)
-        status:
-          type: string
-          enum: [pending, processing, shipped, delivered, cancelled]
-          description: Sipariş durumu
-        shippingAddress:
-          $ref: '#/components/schemas/Address'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
-    OrderCreate:
-      type: object
-      required:
-        - items
-        - shippingAddress
-      properties:
-        items:
-          type: array
-          minItems: 1
-          items:
-            type: object
-            required:
-              - productId
-              - quantity
-            properties:
-              productId:
-                type: string
-                format: uuid
-              quantity:
-                type: integer
-                minimum: 1
-        shippingAddress:
-          $ref: '#/components/schemas/Address'
-
-    OrderItem:
-      type: object
-      properties:
-        productId:
-          type: string
-          format: uuid
-        productName:
-          type: string
-        quantity:
-          type: integer
-        unitPrice:
-          type: number
-          format: float
-        totalPrice:
-          type: number
-          format: float
-
-    Address:
-      type: object
-      required:
-        - street
-        - city
-        - postalCode
-        - country
-      properties:
-        street:
-          type: string
-          example: "Atatürk Caddesi No:123"
-        city:
-          type: string
-          example: "İstanbul"
-        postalCode:
-          type: string
-          example: "34000"
-        country:
-          type: string
-          example: "Türkiye"
-
-    UserList:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/User'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    ProductList:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Product'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    OrderList:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Order'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    Pagination:
-      type: object
-      properties:
-        page:
-          type: integer
-          description: Mevcut sayfa
-          example: 1
-        limit:
-          type: integer
-          description: Sayfa başına kayıt
-          example: 20
-        totalPages:
-          type: integer
-          description: Toplam sayfa sayısı
-          example: 5
-        totalItems:
-          type: integer
-          description: Toplam kayıt sayısı
-          example: 95
+        - message
 
     Error:
       type: object
-      required:
-        - code
-        - message
+      description: Hata durumlarında döndürülen standart hata yanıtı
       properties:
-        code:
-          type: string
-          description: Hata kodu
-          example: "VALIDATION_ERROR"
         message:
           type: string
-          description: Hata mesajı
-          example: "Geçersiz email adresi"
-        details:
-          type: array
-          description: Detaylı hata bilgileri
-          items:
-            type: object
-            properties:
-              field:
-                type: string
-                example: "email"
-              message:
-                type: string
-                example: "Email formatı geçersiz"
+          example: "Bir hata oluştu"
+      required:
+        - message
 
-  responses:
-    BadRequest:
-      description: Geçersiz istek
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: "BAD_REQUEST"
-            message: "İstek parametreleri geçersiz"
-    
-    Unauthorized:
-      description: Yetkisiz erişim
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: "UNAUTHORIZED"
-            message: "Kimlik doğrulama başarısız"
-    
-    NotFound:
-      description: Kaynak bulunamadı
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: "NOT_FOUND"
-            message: "İstenen kaynak bulunamadı"
-    
-    Forbidden:
-      description: Erişim reddedildi
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            code: "FORBIDDEN"
-            message: "Bu işlem için yetkiniz bulunmamaktadır"
-``
+    User:
+      type: object
+      description: Kullanıcı modeli
+      properties:
+        _id:
+          type: string
+          example: "usr123"
+        email:
+          type: string
+          example: "feyza@mail.com"
+        name:
+          type: string
+          example: "Feyza"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-02-20T14:30:00Z"
+      required:
+        - _id
+        - email
+
+    UserUpdateInput:
+      type: object
+      description: Profil güncelleme isteği
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+          example: "Feyza"
+        email:
+          type: string
+          example: "feyza@mail.com"
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+          example: "feyza@mail.com"
+        password:
+          type: string
+          example: "123456"
+      required:
+        - email
+        - password
+
+    RegisterInput:
+      type: object
+      properties:
+        email:
+          type: string
+          example: "feyza@mail.com"
+        password:
+          type: string
+          example: "123456"
+        name:
+          type: string
+          example: "Feyza"
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    Recipe:
+      type: object
+      description: Tarif modeli
+      properties:
+        _id:
+          type: string
+          example: "rcp123"
+        title:
+          type: string
+          example: "Kremalı Mantarlı Tavuk"
+        ingredients:
+          type: array
+          items:
+            type: string
+          example: ["Tavuk", "Mantar", "Krema", "Tuz"]
+        steps:
+          type: array
+          items:
+            type: string
+          example: ["Tavuğu pişir", "Mantar ekle", "Krema ekle"]
+        category:
+          type: string
+          example: "Ana Yemek"
+        authorId:
+          type: string
+          example: "usr123"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-02-20T14:30:00Z"
+      required:
+        - _id
+        - title
+        - ingredients
+        - steps
+
+    RecipeInput:
+      type: object
+      description: Tarif oluşturma/güncelleme isteği
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 120
+          example: "Kremalı Mantarlı Tavuk"
+        ingredients:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          example: ["Tavuk", "Mantar", "Krema"]
+        steps:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          example: ["Tavuğu pişir", "Mantar ekle", "Krema ekle"]
+        category:
+          type: string
+          example: "Ana Yemek"
+      required:
+        - title
+        - ingredients
+        - steps
+
+    Comment:
+      type: object
+      description: Yorum modeli
+      properties:
+        _id:
+          type: string
+          example: "cmt456"
+        recipeId:
+          type: string
+          example: "rcp123"
+        authorId:
+          type: string
+          example: "usr123"
+        text:
+          type: string
+          example: "Harika tarif!"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-02-20T14:30:00Z"
+      required:
+        - _id
+        - recipeId
+        - authorId
+        - text
+
+    CommentInput:
+      type: object
+      description: Yorum ekleme isteği
+      properties:
+        recipeId:
+          type: string
+          example: "rcp123"
+        text:
+          type: string
+          minLength: 2
+          maxLength: 500
+          example: "Harika tarif!"
+      required:
+        - recipeId
+        - text
+
+    Rating:
+      type: object
+      description: Puan modeli
+      properties:
+        _id:
+          type: string
+          example: "rtg001"
+        recipeId:
+          type: string
+          example: "rcp123"
+        userId:
+          type: string
+          example: "usr123"
+        value:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-02-20T14:30:00Z"
+      required:
+        - recipeId
+        - userId
+        - value
+
+    RatingInput:
+      type: object
+      description: Puan verme isteği
+      properties:
+        recipeId:
+          type: string
+          example: "rcp123"
+        value:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+      required:
+        - recipeId
+        - value
+
+    Video:
+      type: object
+      description: Video modeli
+      properties:
+        _id:
+          type: string
+          example: "vid789"
+        recipeId:
+          type: string
+          example: "rcp123"
+        url:
+          type: string
+          example: "https://cdn.example.com/videos/vid789.mp4"
+        createdOn:
+          type: string
+          format: date-time
+          example: "2026-02-20T14:30:00Z"
+      required:
+        - _id
+        - recipeId
+        - url
+
+    VideoInput:
+      type: object
+      description: Video ekleme isteği
+      properties:
+        recipeId:
+          type: string
+          example: "rcp123"
+        url:
+          type: string
+          example: "https://cdn.example.com/videos/vid789.mp4"
+      required:
+        - recipeId
+        - url
+
+    CalorieCalcInput:
+      type: object
+      description: Tarif içeriğinden kalori tahmini için istek
+      properties:
+        title:
+          type: string
+          example: "Kremalı Mantarlı Tavuk"
+        ingredients:
+          type: array
+          items:
+            type: string
+          example: ["Tavuk 200g", "Krema 100ml", "Mantar 150g"]
+        steps:
+          type: array
+          items:
+            type: string
+          example: ["Tavuğu pişir", "Krema ekle"]
+      required:
+        - ingredients
+
+    CalorieCalcResponse:
+      type: object
+      description: Kalori tahmini yanıtı
+      properties:
+        estimatedCalories:
+          type: integer
+          example: 650
+        confidence:
+          type: number
+          format: float
+          example: 0.78
+        notes:
+          type: string
+          example: "Tahmin, porsiyon varsayımları içerir."
+      required:
+        - estimatedCalories

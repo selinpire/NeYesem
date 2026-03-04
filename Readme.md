@@ -4,7 +4,7 @@
 
 ## Proje Hakkında
 
-![Ürün Tanıtım Görseli](NeYesemAfis.png)
+![Ürün Tanıtım Görseli](NeYesem.png)
 
 **Proje Tanımı:** 
 NeYesem, kullanıcıların yemek tariflerine kolayca ulaşabildiği, kendi tariflerini paylaşabildiği ve diğer kullanıcılarla etkileşim kurabildiği, web ve mobil uyumlu bir yemek tarifleri platformudur.
