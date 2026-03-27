@@ -39,3 +39,7 @@
 10. **Video Ekleme**
     - **API Metodu:** `POST /videos`
     - **Açıklama:** Tariflere videolu anlatım eklenmesini sağlar.
+
+11. **IA Yemek Önerisi**
+    - **API Metodu:** `POST /suggest-meals`
+    - **Açıklama:** Moduna göre tarif önerir.
