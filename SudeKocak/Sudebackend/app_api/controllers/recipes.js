@@ -4,9 +4,28 @@ const createResponse = (res, status, content) => {
   res.status(status).json(content);
 };
 
+const ALLOWED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+
+const isValidImageUrl = (url) => {
+  if (!url) return true;
+  const lower = url.toLowerCase().split("?")[0];
+  return ALLOWED_IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+};
+
 const addRecipe = async (req, res) => {
   try {
-    const recipe = await Recipe.create(req.body);
+    const recipeData = { ...req.body };
+
+    if (recipeData.image && !isValidImageUrl(recipeData.image)) {
+      return createResponse(res, 400, {
+        message: "Geçersiz görsel formatı. Sadece .jpg, .jpeg, .png, .webp uzantıları kabul edilir.",
+      });
+    }
+
+    if (req.user) {
+      recipeData.createdBy = req.user.id;
+    }
+    const recipe = await Recipe.create(recipeData);
     createResponse(res, 201, {
       message: "Tarif başarıyla oluşturuldu.",
       recipe,
@@ -14,6 +33,18 @@ const addRecipe = async (req, res) => {
   } catch (error) {
     createResponse(res, 400, {
       message: "Tarif oluşturulamadı.",
+      error: error.message,
+    });
+  }
+};
+
+const getMyRecipes = async (req, res) => {
+  try {
+    const recipes = await Recipe.find({ createdBy: req.user.id });
+    createResponse(res, 200, recipes);
+  } catch (error) {
+    createResponse(res, 500, {
+      message: "Tarifler alınamadı.",
       error: error.message,
     });
   }
@@ -210,6 +241,7 @@ module.exports = {
   addRecipe,
   getAllRecipes,
   getRecipeById,
+  getMyRecipes,
   updateRecipe,
   deleteRecipe,
   searchRecipes,
@@ -217,4 +249,5 @@ module.exports = {
   addFavorite,
   addVideo,
   deleteVideo,
+}; deleteVideo,
 };

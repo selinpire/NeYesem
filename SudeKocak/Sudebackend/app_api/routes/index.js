@@ -19,7 +19,8 @@ router.use("/ai", aiRoutes);
 
 // ==================== RECİPE ====================
 
-router.post("/recipes", recipesController.addRecipe);
+router.get("/recipes/my", authMiddleware, recipesController.getMyRecipes);
+router.post("/recipes", authMiddleware, recipesController.addRecipe);
 router.get("/recipes", recipesController.getAllRecipes);
 router.get("/recipes/search", recipesController.searchRecipes);
 router.get("/recipes/:recipeId", recipesController.getRecipeById);

@@ -23,15 +23,24 @@ const recipeSchema = new mongoose.Schema({
   description: String,
   ingredients: [String],
   steps: [String],
-  category: String,
+  category: {
+    type: String,
+    enum: ["Ana Yemek", "Çorba", "Tatlı", "Salata", "Kahvaltı", "İçecek", "Atıştırmalık", "Diğer"],
+    default: "Diğer",
+  },
+  image: String,
+  cookingTime: {
+    type: String,
+    default: "",
+  },
   videoUrl: String,
   favoritesCount: {
     type: Number,
     default: 0,
-
-    videoUrl: {
-  type: String
-}
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
   comments: [commentSchema],
   createdAt: {

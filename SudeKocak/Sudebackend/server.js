@@ -2,11 +2,13 @@ require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 const routes = require("./app_api/routes/index");
 
 const app = express();
 
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use("/api", routes);
 
@@ -16,7 +18,9 @@ app.get("/", (req, res) => {
 
 async function startServer() {
   try {
-    await mongoose.connect("mongodb+srv://mekanbulUser:Neyesem123@cluster0.dqlktmq.mongodb.net/neyesem");
+    await mongoose.connect("mongodb+srv://asy:asy@cluster0.wtlbjp0.mongodb.net/neysem");
+    //mongodb+srv://mekanbulUser:Neyesem123@cluster0.dqlktmq.mongodb.net/neyesem
+
     console.log("MongoDB bağlantısı başarılı");
 
     app.listen(3000, () => {
