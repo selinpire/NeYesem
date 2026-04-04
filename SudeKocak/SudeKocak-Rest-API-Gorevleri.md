@@ -1,7 +1,8 @@
+
 ## NeYesem REST API Tasarımı
 
-### Base URL
-`http://localhost:3000/api`
+### Api Test Videosu
+`https://www.youtube.com/watch?v=UiqVl0_fZXU`
 ---
 
 ## 1. Tarif Ekleme
