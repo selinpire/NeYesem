@@ -1,8 +1,13 @@
 const OpenAI = require("openai");
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let client = null;
+
+function getClient() {
+  if (!client) {
+    client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "placeholder" });
+  }
+  return client;
+}
 
 const getMealSuggestionsByMood = async (mood) => {
   const allowedMoods = ["hafif", "sağlıklı", "hızlı"];
@@ -30,7 +35,7 @@ Cevabı sadece geçerli JSON formatında ver.
 }
 `;
 
-  const response = await client.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: "gpt-4.1-mini",
     messages: [
       {
@@ -84,7 +89,7 @@ Tarif:
 ${recipe}
 `;
 
-  const response = await client.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: "gpt-4.1-mini",
     messages: [
       {
