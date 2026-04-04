@@ -8,42 +8,24 @@ const routes = require("./app_api/routes/index");
 
 const app = express();
 
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors());
+app.options("*", cors());
 
 app.use(express.json({ limit: "16mb" }));
 app.use(express.urlencoded({ extended: true, limit: "16mb" }));
 
 const MONGODB_URI = "mongodb+srv://asy:asy@cluster0.wtlbjp0.mongodb.net/neysem";
 
-let isConnected = false;
+let cachedDb = null;
 
 async function connectDB() {
-  if (isConnected) return;
-  try {
-    await mongoose.connect(MONGODB_URI);
-    isConnected = true;
-    console.log("MongoDB bağlantısı başarılı");
-  } catch (err) {
-    console.log("MongoDB bağlantı hatası:", err.message);
-    throw err;
-  }
+  if (cachedDb && mongoose.connection.readyState === 1) return;
+  await mongoose.connect(MONGODB_URI);
+  cachedDb = mongoose.connection;
+  console.log("MongoDB bağlantısı başarılı");
 }
 
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    res.status(500).json({ message: "Veritabanı bağlantı hatası" });
-  }
-});
+connectDB().catch((err) => console.log("İlk bağlantı hatası:", err.message));
 
 app.get("/", (req, res) => {
   res.send("NeYesem API çalışıyor");
