@@ -1,5 +1,9 @@
 import api from "./api";
 
+const authHeader = () => ({
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+});
+
 export const getAllRecipes = async () => {
   const response = await api.get("/recipes");
   return response.data;
@@ -31,9 +35,29 @@ export const addRecipe = async (recipeData) => {
 };
 
 export const getMyRecipes = async () => {
-  const token = localStorage.getItem("token");
   const response = await api.get("/recipes/my", {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeader(),
+  });
+  return response.data;
+};
+
+export const updateRecipe = async (recipeId, recipeData) => {
+  const response = await api.put(`/recipes/${recipeId}`, recipeData, {
+    headers: authHeader(),
+  });
+  return response.data;
+};
+
+export const deleteRecipe = async (recipeId) => {
+  const response = await api.delete(`/recipes/${recipeId}`, {
+    headers: authHeader(),
+  });
+  return response.data;
+};
+
+export const deleteRecipeVideo = async (recipeId) => {
+  const response = await api.delete(`/recipes/${recipeId}/video`, {
+    headers: authHeader(),
   });
   return response.data;
 };

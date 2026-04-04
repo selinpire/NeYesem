@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Favorites from "./pages/Favorites";
 import AddRecipe from "./pages/AddRecipe";
+import EditRecipe from "./pages/EditRecipe";
 import MyRecipes from "./pages/MyRecipes";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
@@ -20,6 +21,14 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/recipes" element={<Recipes />} />
+        <Route
+          path="/recipes/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditRecipe />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/recipes/:id" element={<RecipeDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

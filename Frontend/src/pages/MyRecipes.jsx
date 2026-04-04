@@ -1,51 +1,80 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { getMyRecipes } from "../services/recipeService";
+import { getMyRecipes, deleteRecipe } from "../services/recipeService";
 import { getApiErrorMessage } from "../services/userService";
 import { useAuth } from "../context/AuthContext";
-import StarRatingDisplay from "../components/StarRatingDisplay";
-
-function truncateDescription(text, max = 140) {
-  if (!text || typeof text !== "string") return "";
-  const oneLine = text.replace(/\s+/g, " ").trim();
-  if (oneLine.length <= max) return oneLine;
-  return `${oneLine.slice(0, max)}…`;
-}
+import RecipeCard from "../components/RecipeCard";
+import DeleteRecipeModal from "../components/DeleteRecipeModal";
 
 function MyRecipes() {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [addedBanner, setAddedBanner] = useState(false);
+  const [updatedBanner, setUpdatedBanner] = useState(false);
+  const [deletedBanner, setDeletedBanner] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (location.state?.recipeAdded) {
-      setAddedBanner(true);
-      navigate(location.pathname, { replace: true, state: {} });
+  const loadList = async () => {
+    setFetchError("");
+    try {
+      const data = await getMyRecipes();
+      setRecipes(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setFetchError(getApiErrorMessage(err, "Tarifler yüklenemedi."));
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    const s = location.state;
+    if (!s || typeof s !== "object") return;
+    if (s.recipeAdded) {
+      setAddedBanner(true);
+    } else if (s.recipeUpdated) {
+      setUpdatedBanner(true);
+    } else if (s.recipeDeleted) {
+      setDeletedBanner(true);
+    } else {
+      return;
+    }
+    navigate(location.pathname, { replace: true, state: {} });
   }, [location.pathname, location.state, navigate]);
 
   useEffect(() => {
-    async function fetchMyRecipes() {
-      setFetchError("");
-      try {
-        const data = await getMyRecipes();
-        setRecipes(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
-        setFetchError(getApiErrorMessage(err, "Tarifler yüklenemedi."));
-      } finally {
-        setLoading(false);
-      }
-    }
-
     if (user) {
-      fetchMyRecipes();
+      loadList();
     }
   }, [user]);
+
+  const closeDeleteModal = () => {
+    if (deleteLoading) return;
+    setDeleteTarget(null);
+    setDeleteError("");
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget?._id) return;
+    setDeleteError("");
+    setDeleteLoading(true);
+    try {
+      await deleteRecipe(deleteTarget._id);
+      setRecipes((prev) => prev.filter((r) => String(r._id) !== String(deleteTarget._id)));
+      closeDeleteModal();
+      setDeletedBanner(true);
+    } catch (err) {
+      setDeleteError(getApiErrorMessage(err, "Tarif silinemedi."));
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <main className="page">
@@ -56,7 +85,17 @@ function MyRecipes() {
 
       {addedBanner && (
         <div className="profile-alert profile-alert--success my-recipes-banner" role="status">
-          Tarif başarıyla eklendi
+          Tarif başarıyla eklendi.
+        </div>
+      )}
+      {updatedBanner && (
+        <div className="profile-alert profile-alert--success my-recipes-banner" role="status">
+          Tarif başarıyla güncellendi.
+        </div>
+      )}
+      {deletedBanner && (
+        <div className="profile-alert profile-alert--success my-recipes-banner" role="status">
+          Tarif başarıyla silindi.
         </div>
       )}
 
@@ -80,31 +119,26 @@ function MyRecipes() {
       {!loading && recipes.length > 0 && (
         <div className="recipes-grid">
           {recipes.map((recipe) => (
-            <div key={recipe._id} className="recipe-card">
-              {recipe.image && (
-                <img
-                  src={recipe.image}
-                  alt={recipe.title}
-                  className="recipe-card-image"
-                />
-              )}
-              <div className="recipe-card-body">
-                <h3>{recipe.title}</h3>
-                <p className="recipe-description">{truncateDescription(recipe.description)}</p>
-                <p>{recipe.category}</p>
-                <StarRatingDisplay
-                  averageRating={recipe.averageRating}
-                  ratingsCount={recipe.ratingsCount}
-                  compact
-                />
-                <Link to={`/recipes/${recipe._id}`} className="recipe-btn">
-                  Tarife Git
-                </Link>
-              </div>
-            </div>
+            <RecipeCard
+              key={recipe._id}
+              recipe={recipe}
+              showFavorite={false}
+              detailButtonLabel="Tarife Git"
+              currentUserId={user?.id}
+              onRequestDelete={(r) => setDeleteTarget(r)}
+            />
           ))}
         </div>
       )}
+
+      <DeleteRecipeModal
+        open={Boolean(deleteTarget)}
+        recipeTitle={deleteTarget?.title}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDelete}
+        loading={deleteLoading}
+        error={deleteError}
+      />
     </main>
   );
 }

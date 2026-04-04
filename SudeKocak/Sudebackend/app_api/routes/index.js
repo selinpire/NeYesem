@@ -24,21 +24,25 @@ router.get("/recipes/my", authMiddleware, recipesController.getMyRecipes);
 router.post("/recipes", authMiddleware, recipesController.addRecipe);
 router.get("/recipes", recipesController.getAllRecipes);
 router.get("/recipes/search", recipesController.searchRecipes);
-router.get("/recipes/:recipeId", optionalAuth, recipesController.getRecipeById);
-router.put("/recipes/:recipeId", recipesController.updateRecipe);
-router.delete("/recipes/:recipeId", recipesController.deleteRecipe);
 router.get("/recipes/category/list", recipesController.getRecipesByCategory);
+router.get("/recipes/:recipeId", optionalAuth, recipesController.getRecipeById);
+router.put("/recipes/:recipeId", authMiddleware, recipesController.updateRecipe);
+router.delete("/recipes/:recipeId", authMiddleware, recipesController.deleteRecipe);
 
-router.post("/recipes/:recipeId/comments", commentsController.addComment);
-router.delete("/recipes/:recipeId/comments/:commentId", commentsController.deleteComment);
+router.post("/recipes/:recipeId/comments", authMiddleware, commentsController.addComment);
+router.delete(
+  "/recipes/:recipeId/comments/:commentId",
+  authMiddleware,
+  commentsController.deleteComment
+);
 
 router.post("/recipes/:recipeId/favorite", authMiddleware, favoriteController.toggleFavorite);
 
 router.post("/recipes/:recipeId/rating", authMiddleware, ratingController.upsertRating);
 
-router.post("/recipes/:recipeId/video", recipesController.addVideo);
+router.post("/recipes/:recipeId/video", authMiddleware, recipesController.addVideo);
 
-router.delete("/recipes/:recipeId/video", recipesController.deleteVideo);
+router.delete("/recipes/:recipeId/video", authMiddleware, recipesController.deleteVideo);
 
 // ==================== AUTH ====================
 router.post("/auth/register", authController.register);

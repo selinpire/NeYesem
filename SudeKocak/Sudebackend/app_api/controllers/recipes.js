@@ -1,6 +1,45 @@
 const Recipe = require("../models/recipe");
 const Rating = require("../models/rating");
+const Favorite = require("../models/favorite");
 const { getSummaryForRecipeId, attachSummaries } = require("../utils/recipeRatingStats");
+const { toPublicComments } = require("../utils/commentPublic");
+
+const ALLOWED_RECIPE_UPDATE_FIELDS = [
+  "title",
+  "description",
+  "category",
+  "ingredients",
+  "steps",
+  "image",
+  "cookingTime",
+  "videoUrl",
+];
+
+function pickAllowedRecipeUpdates(body) {
+  const out = {};
+  for (const k of ALLOWED_RECIPE_UPDATE_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(body, k)) {
+      out[k] = body[k];
+    }
+  }
+  return out;
+}
+
+function assertRecipeOwner(res, recipe, userId) {
+  if (!recipe.createdBy) {
+    createResponse(res, 403, {
+      message: "Bu tarif güncellenemez veya silinemez (sahip bilgisi yok).",
+    });
+    return false;
+  }
+  if (String(recipe.createdBy) !== String(userId)) {
+    createResponse(res, 403, {
+      message: "Yalnızca kendi tarifinizi düzenleyebilir veya silebilirsiniz.",
+    });
+    return false;
+  }
+  return true;
+}
 
 const createResponse = (res, status, content) => {
   res.status(status).json(content);
@@ -28,6 +67,35 @@ const isValidRecipeImageValue = (value) => {
   if (/^https?:\/\//i.test(value)) return isValidImageUrl(value);
   return false;
 };
+
+const MAX_VIDEO_URL_LEN = 2048;
+
+/** Boş string = video yok. null error = geçersiz. */
+function normalizeOptionalVideoUrl(value) {
+  if (value === undefined || value === null) {
+    return { ok: true, url: "" };
+  }
+  if (typeof value !== "string") {
+    return { ok: false, error: "Video bağlantısı geçersiz." };
+  }
+  const t = value.trim();
+  if (!t) {
+    return { ok: true, url: "" };
+  }
+  if (t.length > MAX_VIDEO_URL_LEN) {
+    return { ok: false, error: "Video bağlantısı çok uzun." };
+  }
+  let u;
+  try {
+    u = new URL(t);
+  } catch {
+    return { ok: false, error: "Geçersiz video bağlantısı." };
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") {
+    return { ok: false, error: "Video bağlantısı yalnızca http veya https olabilir." };
+  }
+  return { ok: true, url: t };
+}
 
 const addRecipe = async (req, res) => {
   try {
@@ -64,6 +132,13 @@ const addRecipe = async (req, res) => {
     if (req.user) {
       recipeData.createdBy = req.user.id;
     }
+
+    const nv = normalizeOptionalVideoUrl(recipeData.videoUrl);
+    if (!nv.ok) {
+      return createResponse(res, 400, { message: nv.error });
+    }
+    recipeData.videoUrl = nv.url;
+
     const recipe = await Recipe.create(recipeData);
     createResponse(res, 201, {
       message: "Tarif başarıyla oluşturuldu.",
@@ -114,6 +189,7 @@ const getRecipeById = async (req, res) => {
     }
 
     const plain = recipe.toObject();
+    plain.comments = toPublicComments(plain.comments || []);
     const summary = await getSummaryForRecipeId(recipe._id);
     let myRating = null;
     if (req.user && req.user.id) {
@@ -141,32 +217,47 @@ const getRecipeById = async (req, res) => {
 
 const updateRecipe = async (req, res) => {
   try {
-    if (req.body.image !== undefined && req.body.image !== null) {
-      const imgStr = String(req.body.image).trim();
-      if (imgStr !== "" && !isValidRecipeImageValue(req.body.image)) {
-        return createResponse(res, 400, {
-          message:
-            "Geçersiz görsel. Yalnızca .jpg, .jpeg, .png veya .webp (yüklenen dosya veya uyumlu adres) kabul edilir.",
-        });
-      }
-      if (typeof req.body.image === "string" && req.body.image.length > MAX_IMAGE_PAYLOAD_CHARS) {
-        return createResponse(res, 400, {
-          message: "Görsel dosyası çok büyük. Daha küçük bir görsel seçin.",
-        });
-      }
-    }
-
-    const recipe = await Recipe.findByIdAndUpdate(
-      req.params.recipeId,
-      req.body,
-      { new: true, runValidators: true }
-    );
+    const recipe = await Recipe.findById(req.params.recipeId);
 
     if (!recipe) {
       return createResponse(res, 404, {
         message: "Tarif bulunamadı.",
       });
     }
+
+    if (!assertRecipeOwner(res, recipe, req.user.id)) {
+      return;
+    }
+
+    const payload = pickAllowedRecipeUpdates(req.body);
+
+    if (Object.prototype.hasOwnProperty.call(payload, "image")) {
+      if (payload.image !== undefined && payload.image !== null) {
+        const imgStr = String(payload.image).trim();
+        if (imgStr !== "" && !isValidRecipeImageValue(payload.image)) {
+          return createResponse(res, 400, {
+            message:
+              "Geçersiz görsel. Yalnızca .jpg, .jpeg, .png veya .webp (yüklenen dosya veya uyumlu adres) kabul edilir.",
+          });
+        }
+        if (typeof payload.image === "string" && payload.image.length > MAX_IMAGE_PAYLOAD_CHARS) {
+          return createResponse(res, 400, {
+            message: "Görsel dosyası çok büyük. Daha küçük bir görsel seçin.",
+          });
+        }
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(payload, "videoUrl")) {
+      const nv = normalizeOptionalVideoUrl(payload.videoUrl);
+      if (!nv.ok) {
+        return createResponse(res, 400, { message: nv.error });
+      }
+      payload.videoUrl = nv.url;
+    }
+
+    Object.assign(recipe, payload);
+    await recipe.save({ validateModifiedOnly: true });
 
     createResponse(res, 200, {
       message: "Tarif başarıyla güncellendi.",
@@ -182,13 +273,24 @@ const updateRecipe = async (req, res) => {
 
 const deleteRecipe = async (req, res) => {
   try {
-    const recipe = await Recipe.findByIdAndDelete(req.params.recipeId);
+    const recipe = await Recipe.findById(req.params.recipeId);
 
     if (!recipe) {
       return createResponse(res, 404, {
         message: "Tarif bulunamadı.",
       });
     }
+
+    if (!assertRecipeOwner(res, recipe, req.user.id)) {
+      return;
+    }
+
+    const recipeId = recipe._id;
+    await Promise.all([
+      Rating.deleteMany({ recipe: recipeId }),
+      Favorite.deleteMany({ recipe: recipeId }),
+    ]);
+    await Recipe.findByIdAndDelete(recipeId);
 
     createResponse(res, 200, {
       message: "Tarif başarıyla silindi.",
@@ -246,7 +348,18 @@ const addVideo = async (req, res) => {
       return createResponse(res, 404, { message: "Tarif bulunamadı." });
     }
 
-    recipe.videoUrl = req.body.videoUrl;
+    if (!assertRecipeOwner(res, recipe, req.user.id)) {
+      return;
+    }
+
+    const nv = normalizeOptionalVideoUrl(req.body.videoUrl);
+    if (!nv.ok) {
+      return createResponse(res, 400, { message: nv.error });
+    }
+    if (!nv.url) {
+      return createResponse(res, 400, { message: "Video URL gerekli." });
+    }
+    recipe.videoUrl = nv.url;
     await recipe.save();
 
     createResponse(res, 200, {
@@ -267,6 +380,10 @@ const deleteVideo = async (req, res) => {
 
     if (!recipe) {
       return createResponse(res, 404, { message: "Tarif bulunamadı." });
+    }
+
+    if (!assertRecipeOwner(res, recipe, req.user.id)) {
+      return;
     }
 
     if (!recipe.videoUrl) {

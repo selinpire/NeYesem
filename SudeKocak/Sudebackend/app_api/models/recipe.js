@@ -1,13 +1,24 @@
 const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+  userName: {
+    type: String,
+    trim: true,
+  },
+  /** Eski kayıtlar (yalnızca metin kullanıcı adı) */
   user: {
     type: String,
-    required: true,
+    trim: true,
   },
   text: {
     type: String,
     required: true,
+    trim: true,
+    maxlength: 2000,
   },
   createdAt: {
     type: Date,

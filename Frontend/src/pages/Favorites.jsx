@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getFavorites } from "../services/favoriteService";
 import { getApiErrorMessage } from "../services/userService";
-import FavoriteHeartButton from "../components/FavoriteHeartButton";
-import StarRatingDisplay from "../components/StarRatingDisplay";
+import RecipeCard from "../components/RecipeCard";
 
 function Favorites() {
   const { user } = useAuth();
@@ -59,43 +58,20 @@ function Favorites() {
               const recipe = fav.recipe;
               if (!recipe) return null;
               return (
-                <div key={fav._id} className="recipe-card">
-                  <div className="recipe-card-image-wrap">
-                    <img
-                      src={
-                        recipe.image ||
-                        "https://via.placeholder.com/300x200?text=Tarif+Gorseli"
-                      }
-                      alt={recipe.title}
-                      className="recipe-card-image"
-                    />
-                    <FavoriteHeartButton
-                      recipeId={recipe._id}
-                      favorited
-                      onFavoriteChange={(stillFav) => {
-                        if (!stillFav) {
-                          setFavorites((prev) =>
-                            prev.filter((x) => String(x.recipe?._id) !== String(recipe._id))
-                          );
-                        }
-                      }}
-                      variant="card"
-                    />
-                  </div>
-                  <div className="recipe-card-body">
-                    <h3>{recipe.title}</h3>
-                    <p className="recipe-description">{recipe.description}</p>
-                    <p>{recipe.category}</p>
-                    <StarRatingDisplay
-                      averageRating={recipe.averageRating}
-                      ratingsCount={recipe.ratingsCount}
-                      compact
-                    />
-                    <Link to={`/recipes/${recipe._id}`} className="recipe-btn">
-                      Tarife Git
-                    </Link>
-                  </div>
-                </div>
+                <RecipeCard
+                  key={fav._id}
+                  recipe={recipe}
+                  favorited
+                  onFavoriteChange={(stillFav) => {
+                    if (!stillFav) {
+                      setFavorites((prev) =>
+                        prev.filter((x) => String(x.recipe?._id) !== String(recipe._id))
+                      );
+                    }
+                  }}
+                  detailButtonLabel="Tarife Git"
+                  currentUserId={user?.id}
+                />
               );
             })}
           </div>

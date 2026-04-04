@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import RecipeCard from "../components/RecipeCards.jsx";
+import RecipeCard from "../components/RecipeCard.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import Sidebar from "../components/Sidebar.jsx";
 import {
@@ -141,6 +141,7 @@ function Recipes() {
                 recipe={recipe}
                 favorited={favoriteIds.has(String(recipe._id))}
                 onFavoriteChange={(next) => handleFavoriteChange(recipe._id, next)}
+                currentUserId={user?.id}
               />
             ))}
           </div>
