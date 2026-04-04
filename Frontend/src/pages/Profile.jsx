@@ -1,90 +1,64 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getProfile, updateProfile, deleteAccount } from "../services/userService";
+import { getProfile, deleteAccount, getApiErrorMessage } from "../services/userService";
+import DeleteAccountModal from "../components/profile/DeleteAccountModal";
 
 function Profile() {
-  const { user, login, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteMessage, setDeleteMessage] = useState("");
-
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    bio: "",
-    profileImage: "",
-  });
-
-  const [updateMsg, setUpdateMsg] = useState({ text: "", type: "" });
-  const [updateLoading, setUpdateLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [updatedBanner, setUpdatedBanner] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
+    if (location.state?.profileUpdated) {
+      setUpdatedBanner(true);
+      navigate(location.pathname, { replace: true, state: {} });
     }
+  }, [location.pathname, location.state, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
 
     async function fetchProfile() {
+      setLoadError("");
       try {
         const data = await getProfile(user.id);
         setProfile(data);
-        setFormData({
-          username: data.username || "",
-          email: data.email || "",
-          bio: data.bio || "",
-          profileImage: data.profileImage || "",
-        });
       } catch (err) {
-        console.error(err);
+        setLoadError(getApiErrorMessage(err, "Profil yüklenemedi."));
       } finally {
         setLoading(false);
       }
     }
 
     fetchProfile();
-  }, [user, navigate]);
+  }, [user]);
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleUpdate = async (e) => {
-    e.preventDefault();
-    setUpdateLoading(true);
-    setUpdateMsg({ text: "", type: "" });
-
-    try {
-      const res = await updateProfile(user.id, formData);
-      setProfile(res.user);
-      login(
-        { id: user.id, username: res.user.username, email: res.user.email },
-        localStorage.getItem("token")
-      );
-      setUpdateMsg({ text: "Profil başarıyla güncellendi.", type: "success" });
-      setEditMode(false);
-    } catch (err) {
-      console.error(err);
-      setUpdateMsg({ text: "Güncelleme sırasında hata oluştu.", type: "error" });
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
+    setDeleteLoading(true);
+    setDeleteError("");
     try {
       await deleteAccount(user.id);
-      setDeleteMessage("Hesabınız silindi.");
       logout();
-      setTimeout(() => navigate("/"), 1500);
+      navigate("/", { replace: true, state: { accountDeleted: true } });
     } catch (err) {
-      console.error(err);
-      setDeleteMessage("Hesap silinirken hata oluştu.");
+      setDeleteError(getApiErrorMessage(err, "Hesap silinirken hata oluştu."));
+    } finally {
+      setDeleteLoading(false);
     }
+  };
+
+  const openDeleteModal = () => {
+    setDeleteError("");
+    setShowDeleteConfirm(true);
   };
 
   const avatarLetter = profile?.username?.[0]?.toUpperCase() || "K";
@@ -97,10 +71,14 @@ function Profile() {
     );
   }
 
-  if (!profile) {
+  if (loadError || !profile) {
     return (
       <main className="page">
-        <p>Profil bulunamadı.</p>
+        <div className="profile-page">
+          <div className="profile-alert profile-alert--error" role="alert">
+            {loadError || "Profil bulunamadı."}
+          </div>
+        </div>
       </main>
     );
   }
@@ -108,10 +86,9 @@ function Profile() {
   return (
     <main className="page">
       <div className="profile-page">
-
-        {deleteMessage && (
-          <div className="profile-alert profile-alert--success">
-            {deleteMessage}
+        {updatedBanner && (
+          <div className="profile-alert profile-alert--success" role="status">
+            Profiliniz güncellendi.
           </div>
         )}
 
@@ -119,90 +96,43 @@ function Profile() {
           <div className="profile-card-header">
             <div className="profile-page-avatar">
               {profile.profileImage ? (
-                <img src={profile.profileImage} alt="Profil" className="profile-page-img" />
+                <img src={profile.profileImage} alt="" className="profile-page-img" />
               ) : (
-                <span>{avatarLetter}</span>
+                <span aria-hidden="true">{avatarLetter}</span>
               )}
             </div>
             <div className="profile-card-info">
               <h1 className="profile-card-name">{profile.username}</h1>
               <p className="profile-card-email">{profile.email}</p>
-              {profile.bio && <p className="profile-card-bio">{profile.bio}</p>}
+              <div className="profile-bio-block">
+                <span className="profile-bio-label">Hakkımda</span>
+                <p className="profile-card-bio">
+                  {profile.bio?.trim() ? profile.bio : "Henüz bir açıklama eklenmedi."}
+                </p>
+              </div>
             </div>
           </div>
 
           <div className="profile-actions">
-            <button className="primary-btn" onClick={() => { setEditMode((p) => !p); setUpdateMsg({ text: "", type: "" }); }}>
-              {editMode ? "Vazgeç" : "Profili Güncelle"}
-            </button>
+            <Link to="/profile/edit" className="primary-btn">
+              Profili Güncelle
+            </Link>
             <Link to="/favorites" className="secondary-btn">
               Favorilerim
             </Link>
-            <button className="delete-btn" onClick={() => setShowDeleteConfirm(true)}>
+            <button type="button" className="delete-btn" onClick={openDeleteModal}>
               Hesabı Sil
             </button>
           </div>
-
-          {updateMsg.text && (
-            <div className={`profile-alert profile-alert--${updateMsg.type}`}>
-              {updateMsg.text}
-            </div>
-          )}
-
-          {editMode && (
-            <form onSubmit={handleUpdate} className="profile-edit-form">
-              <h2>Profili Düzenle</h2>
-              <input
-                type="text"
-                name="username"
-                placeholder="Kullanıcı Adı"
-                value={formData.username}
-                onChange={handleChange}
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="E-posta"
-                value={formData.email}
-                onChange={handleChange}
-              />
-              <textarea
-                name="bio"
-                placeholder="Hakkımda"
-                value={formData.bio}
-                onChange={handleChange}
-                rows="3"
-              />
-              <input
-                type="text"
-                name="profileImage"
-                placeholder="Profil Fotoğrafı URL"
-                value={formData.profileImage}
-                onChange={handleChange}
-              />
-              <button type="submit" className="primary-btn" disabled={updateLoading}>
-                {updateLoading ? "Kaydediliyor..." : "Kaydet"}
-              </button>
-            </form>
-          )}
         </div>
 
-        {showDeleteConfirm && (
-          <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <h2>Hesabı Sil</h2>
-              <p>Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
-              <div className="modal-actions">
-                <button className="delete-btn" onClick={handleDelete}>
-                  Evet, Sil
-                </button>
-                <button className="secondary-btn" onClick={() => setShowDeleteConfirm(false)}>
-                  Vazgeç
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <DeleteAccountModal
+          open={showDeleteConfirm}
+          onClose={() => !deleteLoading && setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteConfirm}
+          loading={deleteLoading}
+          error={deleteError}
+        />
       </div>
     </main>
   );

@@ -4,6 +4,11 @@ const authHeader = () => ({
   Authorization: `Bearer ${localStorage.getItem("token")}`,
 });
 
+export function getApiErrorMessage(error, fallback = "Bir hata oluştu") {
+  const msg = error.response?.data?.message;
+  return typeof msg === "string" && msg.trim() ? msg : fallback;
+}
+
 export const getProfile = async (userId) => {
   const response = await api.get(`/users/${userId}`, { headers: authHeader() });
   return response.data;

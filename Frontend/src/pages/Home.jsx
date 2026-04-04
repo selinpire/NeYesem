@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Hero from "../components/Hero";
-import { Link } from "react-router-dom";
 
 const sampleRecipes = [
   {
@@ -77,9 +78,25 @@ const difficultyColor = {
 };
 
 function Home() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [accountDeleted, setAccountDeleted] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.accountDeleted) {
+      setAccountDeleted(true);
+      navigate("/", { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
+
   return (
     <main>
       <div className="page">
+        {accountDeleted && (
+          <div className="home-flash profile-alert profile-alert--success" role="status">
+            Hesabınız silindi. Yine görüşmek üzere.
+          </div>
+        )}
         <Hero />
       </div>
 

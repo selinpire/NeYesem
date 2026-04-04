@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Recipes from "./pages/Recipes";
 import RecipeDetail from "./pages/RecipeDetail";
@@ -10,6 +11,7 @@ import Favorites from "./pages/Favorites";
 import AddRecipe from "./pages/AddRecipe";
 import MyRecipes from "./pages/MyRecipes";
 import Profile from "./pages/Profile";
+import ProfileEdit from "./pages/ProfileEdit";
 
 function App() {
   return (
@@ -21,10 +23,46 @@ function App() {
         <Route path="/recipes/:id" element={<RecipeDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/favorites" element={<Favorites />} />
-        <Route path="/add-recipe" element={<AddRecipe />} />
-        <Route path="/my-recipes" element={<MyRecipes />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/favorites"
+          element={
+            <ProtectedRoute>
+              <Favorites />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-recipe"
+          element={
+            <ProtectedRoute>
+              <AddRecipe />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-recipes"
+          element={
+            <ProtectedRoute>
+              <MyRecipes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <ProfileEdit />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </AuthProvider>
   );

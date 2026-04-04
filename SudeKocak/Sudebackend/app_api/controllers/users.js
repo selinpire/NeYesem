@@ -1,11 +1,16 @@
 const User = require("../models/user");
+const Favorite = require("../models/favorite");
+const Rating = require("../models/rating");
+const Recipe = require("../models/recipe");
 const bcrypt = require("bcryptjs");
+
+const isSelf = (req, userId) => String(req.user.id) === String(userId);
 
 const getProfile = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    if (req.user.id !== userId) {
+    if (!isSelf(req, userId)) {
       return res.status(403).json({ message: "Sadece kendi profilini görüntüleyebilirsin" });
     }
 
@@ -28,7 +33,7 @@ const updateProfile = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    if (req.user.id !== userId) {
+    if (!isSelf(req, userId)) {
       return res.status(403).json({ message: "Sadece kendi profilini güncelleyebilirsin" });
     }
 
@@ -86,15 +91,19 @@ const deleteAccount = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    if (req.user.id !== userId) {
+    if (!isSelf(req, userId)) {
       return res.status(403).json({ message: "Sadece kendi hesabını silebilirsin" });
     }
 
-    const deletedUser = await User.findByIdAndDelete(userId);
-
-    if (!deletedUser) {
+    const existing = await User.findById(userId);
+    if (!existing) {
       return res.status(404).json({ message: "Kullanıcı bulunamadı" });
     }
+
+    await Favorite.deleteMany({ user: userId });
+    await Rating.deleteMany({ user: userId });
+    await Recipe.deleteMany({ createdBy: userId });
+    await User.findByIdAndDelete(userId);
 
     res.status(200).json({ message: "Hesap başarıyla silindi" });
   } catch (error) {

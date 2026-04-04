@@ -1,4 +1,6 @@
 const Recipe = require("../models/recipe");
+const Rating = require("../models/rating");
+const { getSummaryForRecipeId, attachSummaries } = require("../utils/recipeRatingStats");
 
 const createResponse = (res, status, content) => {
   res.status(status).json(content);
@@ -6,19 +8,56 @@ const createResponse = (res, status, content) => {
 
 const ALLOWED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
 
+const MAX_IMAGE_PAYLOAD_CHARS = 12 * 1024 * 1024;
+
 const isValidImageUrl = (url) => {
   if (!url) return true;
   const lower = url.toLowerCase().split("?")[0];
   return ALLOWED_IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext));
 };
 
+const isAllowedDataImage = (value) => {
+  if (typeof value !== "string" || !value.startsWith("data:")) return false;
+  return /^data:image\/(jpeg|jpg|png|webp);base64,/i.test(value);
+};
+
+const isValidRecipeImageValue = (value) => {
+  if (!value || typeof value !== "string") return false;
+  if (value.length > MAX_IMAGE_PAYLOAD_CHARS) return false;
+  if (isAllowedDataImage(value)) return true;
+  if (/^https?:\/\//i.test(value)) return isValidImageUrl(value);
+  return false;
+};
+
 const addRecipe = async (req, res) => {
   try {
     const recipeData = { ...req.body };
 
-    if (recipeData.image && !isValidImageUrl(recipeData.image)) {
+    if (!recipeData.image || typeof recipeData.image !== "string" || !recipeData.image.trim()) {
       return createResponse(res, 400, {
-        message: "Geçersiz görsel formatı. Sadece .jpg, .jpeg, .png, .webp uzantıları kabul edilir.",
+        message:
+          "Tarif görseli zorunludur. Yalnızca .jpg, .jpeg, .png veya .webp dosyası yükleyin (URL kabul edilmez).",
+      });
+    }
+
+    const trimmedImg = recipeData.image.trim();
+    if (/^https?:\/\//i.test(trimmedImg) || trimmedImg.startsWith("//")) {
+      return createResponse(res, 400, {
+        message:
+          "Görsel URL ile eklenemez. Yalnızca .jpg, .jpeg, .png veya .webp dosyası yükleyerek gönderin.",
+      });
+    }
+
+    if (!isAllowedDataImage(recipeData.image)) {
+      return createResponse(res, 400, {
+        message:
+          "Geçersiz görsel türü. Yalnızca JPEG, PNG veya WebP içeren yüklenmiş dosya kabul edilir (.jpg, .jpeg, .png, .webp).",
+      });
+    }
+
+    if (recipeData.image.length > MAX_IMAGE_PAYLOAD_CHARS) {
+      return createResponse(res, 400, {
+        message: "Görsel dosyası çok büyük. Daha küçük bir görsel seçin.",
       });
     }
 
@@ -41,7 +80,8 @@ const addRecipe = async (req, res) => {
 const getMyRecipes = async (req, res) => {
   try {
     const recipes = await Recipe.find({ createdBy: req.user.id });
-    createResponse(res, 200, recipes);
+    const withRatings = await attachSummaries(recipes);
+    createResponse(res, 200, withRatings);
   } catch (error) {
     createResponse(res, 500, {
       message: "Tarifler alınamadı.",
@@ -53,7 +93,8 @@ const getMyRecipes = async (req, res) => {
 const getAllRecipes = async (req, res) => {
   try {
     const recipes = await Recipe.find();
-    createResponse(res, 200, recipes);
+    const withRatings = await attachSummaries(recipes);
+    createResponse(res, 200, withRatings);
   } catch (error) {
     createResponse(res, 500, {
       message: "Tarifler alınamadı.",
@@ -72,7 +113,24 @@ const getRecipeById = async (req, res) => {
       });
     }
 
-    createResponse(res, 200, recipe);
+    const plain = recipe.toObject();
+    const summary = await getSummaryForRecipeId(recipe._id);
+    let myRating = null;
+    if (req.user && req.user.id) {
+      const mine = await Rating.findOne({
+        user: req.user.id,
+        recipe: recipe._id,
+      })
+        .select("score")
+        .lean();
+      myRating = mine?.score ?? null;
+    }
+
+    createResponse(res, 200, {
+      ...plain,
+      ...summary,
+      myRating,
+    });
   } catch (error) {
     createResponse(res, 400, {
       message: "Geçersiz tarif id.",
@@ -83,6 +141,21 @@ const getRecipeById = async (req, res) => {
 
 const updateRecipe = async (req, res) => {
   try {
+    if (req.body.image !== undefined && req.body.image !== null) {
+      const imgStr = String(req.body.image).trim();
+      if (imgStr !== "" && !isValidRecipeImageValue(req.body.image)) {
+        return createResponse(res, 400, {
+          message:
+            "Geçersiz görsel. Yalnızca .jpg, .jpeg, .png veya .webp (yüklenen dosya veya uyumlu adres) kabul edilir.",
+        });
+      }
+      if (typeof req.body.image === "string" && req.body.image.length > MAX_IMAGE_PAYLOAD_CHARS) {
+        return createResponse(res, 400, {
+          message: "Görsel dosyası çok büyük. Daha küçük bir görsel seçin.",
+        });
+      }
+    }
+
     const recipe = await Recipe.findByIdAndUpdate(
       req.params.recipeId,
       req.body,
@@ -139,7 +212,8 @@ const searchRecipes = async (req, res) => {
       ],
     });
 
-    createResponse(res, 200, recipes);
+    const withRatings = await attachSummaries(recipes);
+    createResponse(res, 200, withRatings);
   } catch (error) {
     createResponse(res, 400, {
       message: "Arama yapılamadı.",
@@ -151,7 +225,8 @@ const searchRecipes = async (req, res) => {
 const getRecipesByCategory = async (req, res) => {
   try {
     const recipes = await Recipe.find({ category: req.query.category });
-    createResponse(res, 200, recipes);
+    const withRatings = await attachSummaries(recipes);
+    createResponse(res, 200, withRatings);
   } catch (error) {
     createResponse(res, 400, {
       message: "Kategoriye göre listeleme yapılamadı.",
@@ -162,30 +237,6 @@ const getRecipesByCategory = async (req, res) => {
 
 
 
-
-const addFavorite = async (req, res) => {
-  try {
-    const recipe = await Recipe.findById(req.params.recipeId);
-
-    if (!recipe) {
-      return createResponse(res, 404, { message: "Tarif bulunamadı." });
-    }
-
-    recipe.favoritesCount = (recipe.favoritesCount || 0) + 1;
-    await recipe.save();
-
-    createResponse(res, 200, {
-      message: "Favori eklendi.",
-      favoritesCount: recipe.favoritesCount,
-      recipe: recipe
-    });
-  } catch (error) {
-    createResponse(res, 400, {
-      message: "Favori eklenemedi.",
-      error: error.message
-    });
-  }
-};
 
 const addVideo = async (req, res) => {
   try {
@@ -246,8 +297,6 @@ module.exports = {
   deleteRecipe,
   searchRecipes,
   getRecipesByCategory,
-  addFavorite,
   addVideo,
-  deleteVideo,
-}; deleteVideo,
+  deleteVideo
 };

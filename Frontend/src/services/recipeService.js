@@ -11,7 +11,9 @@ export const searchRecipes = async (query) => {
 };
 
 export const getRecipeById = async (id) => {
-  const response = await api.get(`/recipes/${id}`);
+  const token = localStorage.getItem("token");
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const response = await api.get(`/recipes/${id}`, { headers });
   return response.data;
 };
 

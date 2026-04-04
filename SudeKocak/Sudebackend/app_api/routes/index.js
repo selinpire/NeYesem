@@ -13,6 +13,7 @@ const commentsController = require("../controllers/comments");
 
 // Middleware
 const authMiddleware = require("../config/authMiddleware");
+const optionalAuth = require("../config/optionalAuth");
 
 
 router.use("/ai", aiRoutes);
@@ -23,7 +24,7 @@ router.get("/recipes/my", authMiddleware, recipesController.getMyRecipes);
 router.post("/recipes", authMiddleware, recipesController.addRecipe);
 router.get("/recipes", recipesController.getAllRecipes);
 router.get("/recipes/search", recipesController.searchRecipes);
-router.get("/recipes/:recipeId", recipesController.getRecipeById);
+router.get("/recipes/:recipeId", optionalAuth, recipesController.getRecipeById);
 router.put("/recipes/:recipeId", recipesController.updateRecipe);
 router.delete("/recipes/:recipeId", recipesController.deleteRecipe);
 router.get("/recipes/category/list", recipesController.getRecipesByCategory);
@@ -31,7 +32,9 @@ router.get("/recipes/category/list", recipesController.getRecipesByCategory);
 router.post("/recipes/:recipeId/comments", commentsController.addComment);
 router.delete("/recipes/:recipeId/comments/:commentId", commentsController.deleteComment);
 
-router.post("/recipes/:recipeId/favorite", recipesController.addFavorite);
+router.post("/recipes/:recipeId/favorite", authMiddleware, favoriteController.toggleFavorite);
+
+router.post("/recipes/:recipeId/rating", authMiddleware, ratingController.upsertRating);
 
 router.post("/recipes/:recipeId/video", recipesController.addVideo);
 
@@ -51,7 +54,7 @@ router.delete("/users/:userId", authMiddleware, userController.deleteAccount);
 router.get("/favorites", authMiddleware, favoriteController.getFavorites);
 
 // ==================== RATINGS ====================
-router.post("/ratings", authMiddleware, ratingController.addRating);
+router.post("/ratings", authMiddleware, ratingController.upsertRating);
 
 
 module.exports = router;

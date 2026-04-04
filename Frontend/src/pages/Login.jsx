@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { loginUser } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 
@@ -7,7 +7,10 @@ function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
+  const from = location.state?.from;
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -18,10 +21,11 @@ function Login() {
     try {
       const data = await loginUser(formData);
       login(data.user || { email: formData.email }, data.token || "");
-      navigate("/");
+      navigate(from && typeof from === "string" ? from : "/", { replace: true });
     } catch (error) {
       console.error(error);
-      setMessage("Giriş sırasında hata oluştu.");
+      const apiMsg = error.response?.data?.message;
+      setMessage(typeof apiMsg === "string" ? apiMsg : "Giriş sırasında hata oluştu.");
     }
   };
 
@@ -30,6 +34,10 @@ function Login() {
       <div className="auth-card">
         <h1>Giriş Yap</h1>
         <p>NeYesem hesabına giriş yap ve favori tariflerine ulaş.</p>
+
+        {from && (
+          <p className="auth-redirect-hint">Devam etmek için lütfen giriş yapın.</p>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <input

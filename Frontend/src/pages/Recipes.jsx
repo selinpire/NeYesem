@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import RecipeCard from "../components/RecipeCards.jsx";
 import SearchBar from "../components/SearchBar.jsx";
 import Sidebar from "../components/Sidebar.jsx";
@@ -7,13 +7,44 @@ import {
   searchRecipes,
   getRecipesByCategory,
 } from "../services/recipeService";
+import { getFavorites, buildFavoriteRecipeIdSet } from "../services/favoriteService";
+import { useAuth } from "../context/AuthContext";
 
 function Recipes() {
+  const { user } = useAuth();
   const [recipes, setRecipes] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tümü");
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+
+  const refreshFavoriteIds = useCallback(async () => {
+    if (!user) {
+      setFavoriteIds(new Set());
+      return;
+    }
+    try {
+      const list = await getFavorites();
+      setFavoriteIds(buildFavoriteRecipeIdSet(list));
+    } catch {
+      setFavoriteIds(new Set());
+    }
+  }, [user]);
+
+  useEffect(() => {
+    refreshFavoriteIds();
+  }, [refreshFavoriteIds]);
+
+  const handleFavoriteChange = useCallback((recipeId, nextFavorited) => {
+    const sid = String(recipeId);
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (nextFavorited) next.add(sid);
+      else next.delete(sid);
+      return next;
+    });
+  }, []);
 
   const loadRecipes = async () => {
     try {
@@ -105,7 +136,12 @@ function Recipes() {
 
           <div className="recipes-grid">
             {recipes.map((recipe) => (
-              <RecipeCard key={recipe._id} recipe={recipe} />
+              <RecipeCard
+                key={recipe._id}
+                recipe={recipe}
+                favorited={favoriteIds.has(String(recipe._id))}
+                onFavoriteChange={(next) => handleFavoriteChange(recipe._id, next)}
+              />
             ))}
           </div>
         </div>
