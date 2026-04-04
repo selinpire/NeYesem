@@ -1,8 +1,10 @@
+const crypto = require("crypto");
 const Recipe = require("../models/recipe");
 const Rating = require("../models/rating");
 const Favorite = require("../models/favorite");
 const { getSummaryForRecipeId, attachSummaries } = require("../utils/recipeRatingStats");
 const { toPublicComments } = require("../utils/commentPublic");
+const { getCalorieAnalysis } = require("../services/aiService");
 
 const ALLOWED_RECIPE_UPDATE_FIELDS = [
   "title",
