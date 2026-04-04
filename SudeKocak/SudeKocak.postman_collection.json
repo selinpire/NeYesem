@@ -1,0 +1,385 @@
+{
+  "info": {
+    "_postman_id": "543ea034-f920-4d22-803e-87334f400130",
+    "name": "SudeKocak",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "50540539",
+    "_collection_link": "https://go.postman.co/collection/50540539-543ea034-f920-4d22-803e-87334f400130?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Tarif Ekle",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"title\": \"Menemen\",\r\n  \"description\": \"Domates, biber ve yumurta ile yapılan pratik bir kahvaltılık.\",\r\n  \"ingredients\": [\"2 yumurta\", \"2 domates\", \"1 biber\", \"tuz\"],\r\n  \"steps\": [\"Biberi doğra\", \"Domatesi ekle\", \"Yumurtayı kır\", \"Karıştır ve pişir\"],\r\n  \"category\": \"Kahvaltı\",\r\n  \"cookingTime\": \"15 dk\",\r\n  \"image\": \"data:image/jpeg;base64,BURAYA_BASE64_GELECEK\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tarif Listeleme",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tarif Ara",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/search?q=menemen",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "menemen"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Kategoriye Göre Listeleme",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/category/list?category=Kahvaltı",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "category",
+            "list"
+          ],
+          "query": [
+            {
+              "key": "category",
+              "value": "Kahvaltı"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tarif Detay Görüntüleme",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/69d16fd73f594dddec5feb93",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "69d16fd73f594dddec5feb93"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tarif Güncelleme",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"message\": \"Tarif başarıyla oluşturuldu.\",\r\n    \"recipe\": {\r\n        \"title\": \"Kaşarlı Menemen\",\r\n        \"description\": \"Domates, biber ve yumurta ile yapılan pratik bir kahvaltılık.\",\r\n        \"ingredients\": [\r\n            \"1 kaşar peyniri\",\r\n            \"2 yumurta\",\r\n            \"2 domates\",\r\n            \"1 biber\",\r\n            \"tuz\"\r\n        ],\r\n        \"steps\": [\r\n            \"Biberi doğra\",\r\n            \"Domatesi ekle\",\r\n            \"Yumurtayı kır\",\r\n            \"Karıştır ve pişir\"\r\n        ],\r\n        \"category\": \"Kahvaltı\",\r\n        \"image\": \"data:image/jpeg;base64,BURAYA_BASE64_GELECEK\",\r\n        \"cookingTime\": \"15 dk\",\r\n        \"videoUrl\": \"\",\r\n        \"favoritesCount\": 0,\r\n        \"createdBy\": \"69cfd113c317dc3785ec81c9\",\r\n        \"_id\": \"69d16fd73f594dddec5feb93\",\r\n        \"comments\": [],\r\n        \"createdAt\": \"2026-04-04T20:08:55.208Z\",\r\n        \"__v\": 0\r\n    }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/69d16fd73f594dddec5feb93",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "69d16fd73f594dddec5feb93"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Yorum Ekleme",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"text\": \"Çok pratik bir tarif!\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/69d16fd73f594dddec5feb93/comments",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "69d16fd73f594dddec5feb93",
+            "comments"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Favori ekleme /çıkarma",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/69d105e8fd8c391dd1788a35/favorite",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "69d105e8fd8c391dd1788a35",
+            "favorite"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Video Ekleme",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"videoUrl\": \"https://www.youtube.com/watch?v=teQLY4SV3qY\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/69d16fd73f594dddec5feb93/video",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "69d16fd73f594dddec5feb93",
+            "video"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Video Silme",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/69d16fd73f594dddec5feb93/video",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "69d16fd73f594dddec5feb93",
+            "video"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tarif Silme",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2ZkMTEzYzMxN2RjMzc4NWVjODFjOSIsImVtYWlsIjoic3VkZWtjay4yNEBnbWFpbC5jb20iLCJpYXQiOjE3NzUzMzI4MDIsImV4cCI6MTc3NTkzNzYwMn0.zvVaCR0NkbD4LXuH5jZS8MDc4dOgWiK8qu-lC8Qe3I4",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/recipes/69d16fd73f594dddec5feb93",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "recipes",
+            "69d16fd73f594dddec5feb93"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

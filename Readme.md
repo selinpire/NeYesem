@@ -43,8 +43,8 @@ Platform, hem masaüstü hem de mobil cihazlarda sorunsuz çalışacak şekilde 
 
 ## Proje Linkleri
 
-- **REST API Adresi:** 
-- **Web Frontend Adresi:** 
+- **REST API Adresi:** https://ne-yesem-amber.vercel.app/
+- **Web Frontend Adresi:** https://ne-yesem-frontend.vercel.app/
 ---
 
 ## Proje Ekibi

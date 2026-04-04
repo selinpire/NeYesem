@@ -28,14 +28,12 @@
    - **API Metodu:** `DELETE /comments/{commentId}`
    - **Açıklama:** Kullanıcının kendi yaptığı yorumu silmesini sağlar.
 
-8. **Video Silme**
-   - **API Metodu:** `DELETE /videos/{videoId}`
-   - **Açıklama:** Tariflere eklenen videoların silinmesini sağlar.
 
-9. **Puanlama Sistemi**
+
+8. **Puanlama Sistemi**
    - **API Metodu:** `POST /ratings`
    - **Açıklama:** Kullanıcıların tariflere 1–5 arası puan vermesini sağlar. Her kullanıcı bir tarif için yalnızca bir kez puan verebilir.
 
-10. **Kalori Hesabı (Yapay Zeka)**
+9. **Kalori Hesabı (Yapay Zeka)**
     - **API Metodu:** `POST /ai/calorie-calculation`
     - **Açıklama:** Yapay zekâ destekli sistem, tarif içeriğini analiz ederek tahmini kalori hesabı yapar.

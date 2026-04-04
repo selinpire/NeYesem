@@ -1,0 +1,221 @@
+{
+  "info": {
+    "_postman_id": "a716e01a-31f9-4a67-bd5b-1b90bd99f105",
+    "name": "SelinPire",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "50537753",
+    "_collection_link": "https://go.postman.co/collection/50537753-a716e01a-31f9-4a67-bd5b-1b90bd99f105?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "KayıtOl",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"username\": \"Selin\",\r\n  \"email\": \"selinnpire@gmail.com\",\r\n  \"password\": \"123456\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/auth/register",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "KayıtSilme",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/users/userID",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "users",
+            "userID"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GirişYap",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"selinpire@gmail.com\",\r\n  \"password\": \"1234\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/auth/login",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ProfilGörüntüleme",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/users/userID",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "users",
+            "userID"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "ProfilGüncelleme",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/users/userID",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "users",
+            "userID"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "FavorileriListeleme",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/favorites",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "favorites"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "YorumSilme",
+      "request": {
+        "method": "DELETE",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "PuanlamaSistemi",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "ÇıkışYap",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "https://ne-yesem-amber.vercel.app/api/auth/logout",
+          "protocol": "https",
+          "host": [
+            "ne-yesem-amber",
+            "vercel",
+            "app"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "logout"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
