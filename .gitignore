@@ -1,2 +1,4 @@
 .DS_Store
-.env
+.envnode_modules/
+MobileFrontend/node_modules/
+.vscode/
