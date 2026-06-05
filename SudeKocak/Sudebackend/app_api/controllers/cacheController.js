@@ -52,8 +52,36 @@ const getValue = async (req, res) => {
   }
 };
 
+const runTest = async (req, res) => {
+  try {
+    const key = "redis-test";
+    const value = {
+      message: "Redis calisiyor",
+      testedAt: new Date().toISOString(),
+    };
+
+    await redisService.set(key, value);
+    const readBack = await redisService.get(key);
+
+    res.status(200).json({
+      success: true,
+      message: "Redis baglantisi basarili",
+      key,
+      written: value,
+      read: readBack,
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      message: "Redis testi basarisiz",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getStatus,
   setValue,
   getValue,
+  runTest,
 };

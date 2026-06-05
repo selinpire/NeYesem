@@ -67,6 +67,7 @@ router.get("/messages/status", messagesController.getStatus);
 router.post("/messages/test", messagesController.sendTestMessage);
 
 // ==================== CACHE (Redis test) ====================
+router.get("/redis-test", cacheController.runTest);
 router.get("/cache/status", cacheController.getStatus);
 router.post("/cache", cacheController.setValue);
 router.get("/cache/:key", cacheController.getValue);
