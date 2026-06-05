@@ -2,12 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Docker Version Check') {
             steps {
                 sh 'docker --version'
@@ -17,13 +11,17 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t neyesem-api .'
+                dir('SudeKocak/Sudebackend') {
+                    sh 'docker build -t neyesem-api .'
+                }
             }
         }
 
         stage('Docker Compose Up') {
             steps {
-                sh 'docker compose up -d'
+                dir('SudeKocak/Sudebackend') {
+                    sh 'docker compose up -d'
+                }
             }
         }
     }
