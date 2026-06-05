@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const routes = require("./app_api/routes/index");
+const rabbitmqService = require("./app_api/services/rabbitmqService");
 
 const app = express();
 
@@ -32,6 +33,17 @@ async function connectDB() {
 
 connectDB().catch((err) => console.log("İlk bağlantı hatası:", err.message));
 
+async function startRabbitMQ() {
+  try {
+    await rabbitmqService.connect();
+    await rabbitmqService.startConsumer((message) => {
+      console.log("RabbitMQ mesaji alindi:", message);
+    });
+  } catch (err) {
+    console.log("RabbitMQ baglantisi kurulamadi:", err.message);
+  }
+}
+
 app.get("/", (req, res) => {
   res.send("NeYesem API çalışıyor");
 });
@@ -39,6 +51,7 @@ app.get("/", (req, res) => {
 app.use("/api", routes);
 
 if (!process.env.VERCEL) {
+  startRabbitMQ();
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server ${PORT} portunda çalışıyor`);
   });

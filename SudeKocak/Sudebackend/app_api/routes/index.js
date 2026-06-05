@@ -9,6 +9,7 @@ const favoriteController = require("../controllers/favorites");
 const ratingController = require("../controllers/ratings");
 const recipesController = require("../controllers/recipes");
 const commentsController = require("../controllers/comments");
+const messagesController = require("../controllers/messagesController");
 
 
 // Middleware
@@ -59,6 +60,10 @@ router.get("/favorites", authMiddleware, favoriteController.getFavorites);
 
 // ==================== RATINGS ====================
 router.post("/ratings", authMiddleware, ratingController.upsertRating);
+
+// ==================== MESSAGES (RabbitMQ test) ====================
+router.get("/messages/status", messagesController.getStatus);
+router.post("/messages/test", messagesController.sendTestMessage);
 
 
 module.exports = router;
