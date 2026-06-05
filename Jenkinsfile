@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Docker Version Check') {
+        stage('Checkout') {
             steps {
-                sh 'docker --version'
-                sh 'docker compose version'
+                checkout scm
             }
         }
 
@@ -20,7 +19,7 @@ pipeline {
         stage('Docker Compose Up') {
             steps {
                 dir('SudeKocak/Sudebackend') {
-                    sh 'docker compose up -d'
+                    sh 'docker compose up -d --build'
                 }
             }
         }

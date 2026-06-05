@@ -18,10 +18,10 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    env_file:
-      - .env
     environment:
       MONGO_URI: ${MONGO_URI:-mongodb://mongodb:27017/neyesem}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-placeholder}
       PORT: ${PORT:-3000}
     depends_on:
       mongodb:
