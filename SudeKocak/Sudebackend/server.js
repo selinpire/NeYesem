@@ -6,6 +6,7 @@ const cors = require("cors");
 
 const routes = require("./app_api/routes/index");
 const rabbitmqService = require("./app_api/services/rabbitmqService");
+const redisService = require("./app_api/services/redisService");
 
 const app = express();
 
@@ -44,6 +45,14 @@ async function startRabbitMQ() {
   }
 }
 
+async function startRedis() {
+  try {
+    await redisService.connect();
+  } catch (err) {
+    console.log("Redis baglantisi kurulamadi:", err.message);
+  }
+}
+
 app.get("/", (req, res) => {
   res.send("NeYesem API çalışıyor");
 });
@@ -52,6 +61,7 @@ app.use("/api", routes);
 
 if (!process.env.VERCEL) {
   startRabbitMQ();
+  startRedis();
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server ${PORT} portunda çalışıyor`);
   });

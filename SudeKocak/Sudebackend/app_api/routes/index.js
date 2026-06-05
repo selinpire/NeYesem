@@ -10,6 +10,7 @@ const ratingController = require("../controllers/ratings");
 const recipesController = require("../controllers/recipes");
 const commentsController = require("../controllers/comments");
 const messagesController = require("../controllers/messagesController");
+const cacheController = require("../controllers/cacheController");
 
 
 // Middleware
@@ -64,6 +65,11 @@ router.post("/ratings", authMiddleware, ratingController.upsertRating);
 // ==================== MESSAGES (RabbitMQ test) ====================
 router.get("/messages/status", messagesController.getStatus);
 router.post("/messages/test", messagesController.sendTestMessage);
+
+// ==================== CACHE (Redis test) ====================
+router.get("/cache/status", cacheController.getStatus);
+router.post("/cache", cacheController.setValue);
+router.get("/cache/:key", cacheController.getValue);
 
 
 module.exports = router;
