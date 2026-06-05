@@ -14,7 +14,12 @@ app.options("*", cors());
 app.use(express.json({ limit: "16mb" }));
 app.use(express.urlencoded({ extended: true, limit: "16mb" }));
 
-const MONGODB_URI = "mongodb+srv://asy:asy@cluster0.wtlbjp0.mongodb.net/neysem";
+const MONGODB_URI =
+  process.env.MONGO_URI ||
+  process.env.MONGODB_URI ||
+  "mongodb+srv://asy:asy@cluster0.wtlbjp0.mongodb.net/neysem";
+
+const PORT = process.env.PORT || 3000;
 
 let cachedDb = null;
 
@@ -33,9 +38,9 @@ app.get("/", (req, res) => {
 
 app.use("/api", routes);
 
-if (process.env.NODE_ENV !== "production") {
-  app.listen(3000, () => {
-    console.log("Server 3000 portunda çalışıyor");
+if (!process.env.VERCEL) {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server ${PORT} portunda çalışıyor`);
   });
 }
 
