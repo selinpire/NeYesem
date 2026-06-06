@@ -6,6 +6,8 @@ import {
   getAllRecipes,
   searchRecipes,
   getRecipesByCategory,
+  getLastSearches,
+  clearLastSearches,
 } from "../services/recipeService";
 import { getFavorites, buildFavoriteRecipeIdSet } from "../services/favoriteService";
 import { useAuth } from "../context/AuthContext";
@@ -18,6 +20,24 @@ function Recipes() {
   const [error, setError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Tümü");
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+  const [lastSearches, setLastSearches] = useState([]);
+
+  const loadLastSearches = useCallback(async () => {
+    if (!user) {
+      setLastSearches([]);
+      return;
+    }
+    try {
+      const searches = await getLastSearches();
+      setLastSearches(Array.isArray(searches) ? searches : []);
+    } catch {
+      setLastSearches([]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadLastSearches();
+  }, [loadLastSearches]);
 
   const refreshFavoriteIds = useCallback(async () => {
     if (!user) {
@@ -71,8 +91,11 @@ function Recipes() {
         return;
       }
 
-      const data = await searchRecipes(searchText);
+      const data = await searchRecipes(searchText, { saveHistory: Boolean(user) });
       setRecipes(data);
+      if (user) {
+        await loadLastSearches();
+      }
     } catch (err) {
       setError("Arama sırasında hata oluştu.");
       console.error(err);
@@ -102,6 +125,34 @@ function Recipes() {
     }
   };
 
+  const handleSelectLastSearch = async (term) => {
+    setSearchText(term);
+    try {
+      setLoading(true);
+      setError("");
+      const data = await searchRecipes(term, { saveHistory: Boolean(user) });
+      setRecipes(data);
+      if (user) {
+        await loadLastSearches();
+      }
+    } catch (err) {
+      setError("Arama sırasında hata oluştu.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearLastSearches = async () => {
+    if (!user) return;
+    try {
+      await clearLastSearches();
+      setLastSearches([]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     loadRecipes();
   }, []);
@@ -118,6 +169,9 @@ function Recipes() {
         setSearchText={setSearchText}
         onSearch={handleSearch}
         onReset={loadRecipes}
+        lastSearches={lastSearches}
+        onSelectLastSearch={handleSelectLastSearch}
+        onClearLastSearches={handleClearLastSearches}
       />
 
       <div className="recipes-layout">

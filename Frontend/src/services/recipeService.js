@@ -9,9 +9,35 @@ export const getAllRecipes = async () => {
   return response.data;
 };
 
-export const searchRecipes = async (query) => {
-  const response = await api.get(`/recipes/search?q=${query}`);
+export const searchRecipes = async (query, options = {}) => {
+  const { saveHistory = false } = options;
+  const token = localStorage.getItem("token");
+
+  if (saveHistory && token) {
+    const response = await api.get("/search/recipes", {
+      params: { q: query },
+      headers: authHeader(),
+    });
+    return response.data;
+  }
+
+  const response = await api.get("/recipes/search", {
+    params: { q: query },
+  });
   return response.data;
+};
+
+export const getLastSearches = async () => {
+  const response = await api.get("/search/last-searches", {
+    headers: authHeader(),
+  });
+  return response.data.searches || [];
+};
+
+export const clearLastSearches = async () => {
+  await api.delete("/search/last-searches", {
+    headers: authHeader(),
+  });
 };
 
 export const getRecipeById = async (id) => {

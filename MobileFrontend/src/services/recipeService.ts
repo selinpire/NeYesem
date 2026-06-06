@@ -6,11 +6,29 @@ export async function getAllRecipes() {
   return response.data;
 }
 
-export async function searchRecipes(query: string) {
+export async function searchRecipes(query: string, options: { saveHistory?: boolean } = {}) {
+  const { saveHistory = false } = options;
+
+  if (saveHistory) {
+    const response = await api.get<Recipe[]>("/search/recipes", {
+      params: { q: query },
+    });
+    return response.data;
+  }
+
   const response = await api.get<Recipe[]>("/recipes/search", {
     params: { q: query },
   });
   return response.data;
+}
+
+export async function getLastSearches() {
+  const response = await api.get<{ searches: string[] }>("/search/last-searches");
+  return response.data.searches || [];
+}
+
+export async function clearLastSearches() {
+  await api.delete("/search/last-searches");
 }
 
 export async function getRecipesByCategory(category: string) {

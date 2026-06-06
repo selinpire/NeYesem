@@ -705,6 +705,43 @@ img {
   background: #222 !important;
 }
 
+.last-searches {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.last-searches-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text-muted, #666);
+}
+
+.last-searches-clear {
+  background: transparent !important;
+  color: var(--orange) !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
+.last-searches-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.last-search-chip {
+  background: #fff7ef !important;
+  color: var(--orange) !important;
+  border: 1px solid #ffd8b5 !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+
 .recipes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

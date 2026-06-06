@@ -21,13 +21,19 @@ const buildAuthResponse = async (user) => {
   const accessToken = createAccessToken(user);
   const refreshToken = refreshTokenService.generateRefreshToken();
 
-  await refreshTokenService.saveRefreshToken(user._id, refreshToken);
+  let refreshTokenSaved = true;
+  try {
+    await refreshTokenService.saveRefreshToken(user._id, refreshToken);
+  } catch (error) {
+    refreshTokenSaved = false;
+    console.log("Refresh token Redis'e kaydedilemedi:", error.message);
+  }
 
   return {
     accessToken,
-    refreshToken,
+    refreshToken: refreshTokenSaved ? refreshToken : null,
     token: accessToken,
-    refreshTokenExpiresIn: REFRESH_TOKEN_TTL_SECONDS,
+    refreshTokenExpiresIn: refreshTokenSaved ? REFRESH_TOKEN_TTL_SECONDS : null,
     user: {
       id: user._id,
       username: user.username,
@@ -137,10 +143,14 @@ const refreshToken = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    await refreshTokenService.deleteRefreshToken(req.user.id);
+    try {
+      await refreshTokenService.deleteRefreshToken(req.user.id);
+    } catch (error) {
+      console.log("Refresh token Redis'ten silinemedi:", error.message);
+    }
     res.status(200).json({ message: "Çıkış başarılı" });
   } catch (error) {
-    res.status(503).json({
+    res.status(500).json({
       message: "Çıkış sırasında hata oluştu",
       error: error.message,
     });

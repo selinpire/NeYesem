@@ -48,10 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       isHydrated,
       async login(payload) {
+        const accessToken = payload.token || (payload as { accessToken?: string }).accessToken || "";
         setUser(payload.user);
-        setToken(payload.token);
-        setApiToken(payload.token);
-        await saveSession(payload.token, payload.user);
+        setToken(accessToken);
+        setApiToken(accessToken);
+        await saveSession(accessToken, payload.user);
       },
       async logout() {
         setUser(null);

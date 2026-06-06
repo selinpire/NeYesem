@@ -14,6 +14,8 @@ import {
   getAllRecipes,
   getRecipesByCategory,
   searchRecipes,
+  getLastSearches,
+  clearLastSearches,
 } from "../services/recipeService";
 import { Recipe } from "../types";
 import { getApiErrorMessage } from "../utils/errors";
@@ -30,6 +32,24 @@ export function RecipesScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [lastSearches, setLastSearches] = useState<string[]>([]);
+
+  const loadLastSearches = useCallback(async () => {
+    if (!user) {
+      setLastSearches([]);
+      return;
+    }
+    try {
+      const searches = await getLastSearches();
+      setLastSearches(Array.isArray(searches) ? searches : []);
+    } catch {
+      setLastSearches([]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadLastSearches();
+  }, [loadLastSearches]);
 
   const refreshFavorites = useCallback(async () => {
     if (!user) {
@@ -72,13 +92,43 @@ export function RecipesScreen() {
         await loadAll();
         return;
       }
-      const data = await searchRecipes(searchText.trim());
+      const data = await searchRecipes(searchText.trim(), { saveHistory: Boolean(user) });
       setRecipes(Array.isArray(data) ? data : []);
+      if (user) {
+        await loadLastSearches();
+      }
     } catch (err) {
       setError(getApiErrorMessage(err, "Arama sirasinda hata olustu."));
       setLoading(false);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSelectLastSearch(term: string) {
+    setSearchText(term);
+    try {
+      setLoading(true);
+      setError("");
+      const data = await searchRecipes(term, { saveHistory: Boolean(user) });
+      setRecipes(Array.isArray(data) ? data : []);
+      if (user) {
+        await loadLastSearches();
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Arama sirasinda hata olustu."));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleClearLastSearches() {
+    if (!user) return;
+    try {
+      await clearLastSearches();
+      setLastSearches([]);
+    } catch {
+      // ignore
     }
   }
 
@@ -130,6 +180,24 @@ export function RecipesScreen() {
               <AppButton title="Ara" onPress={handleSearch} />
               <AppButton title="Tumunu Getir" variant="secondary" onPress={loadAll} />
             </View>
+            {lastSearches.length > 0 ? (
+              <View style={styles.lastSearchesBox}>
+                <View style={styles.lastSearchesHeader}>
+                  <Text style={styles.lastSearchesTitle}>Son aramalar</Text>
+                  <AppButton title="Temizle" variant="secondary" onPress={handleClearLastSearches} />
+                </View>
+                <View style={styles.lastSearchesList}>
+                  {lastSearches.map((term) => (
+                    <AppButton
+                      key={term}
+                      title={term}
+                      variant="secondary"
+                      onPress={() => handleSelectLastSearch(term)}
+                    />
+                  ))}
+                </View>
+              </View>
+            ) : null}
             <CategoryChips
               categories={recipeFilterCategories}
               selected={selectedCategory}
@@ -192,6 +260,22 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   searchActions: {
+    gap: spacing.sm,
+  },
+  lastSearchesBox: {
+    gap: spacing.sm,
+  },
+  lastSearchesHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  lastSearchesTitle: {
+    color: colors.textSecondary,
+    fontWeight: "600",
+  },
+  lastSearchesList: {
     gap: spacing.sm,
   },
 });
