@@ -1,17 +1,39 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
-const redisService = require("../services/redisService");
+const refreshTokenService = require("../services/refreshTokenService");
 
-const createToken = (user) => {
+const ACCESS_TOKEN_EXPIRY = "15m";
+const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
+
+const createAccessToken = (user) => {
   return jwt.sign(
     {
       id: user._id,
       email: user.email,
     },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
   );
+};
+
+const buildAuthResponse = async (user) => {
+  const accessToken = createAccessToken(user);
+  const refreshToken = refreshTokenService.generateRefreshToken();
+
+  await refreshTokenService.saveRefreshToken(user._id, refreshToken);
+
+  return {
+    accessToken,
+    refreshToken,
+    token: accessToken,
+    refreshTokenExpiresIn: REFRESH_TOKEN_TTL_SECONDS,
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+    },
+  };
 };
 
 const register = async (req, res) => {
@@ -35,16 +57,11 @@ const register = async (req, res) => {
       password: hashedPassword,
     });
 
-    const token = createToken(user);
+    const authData = await buildAuthResponse(user);
 
     res.status(201).json({
       message: "Kayıt başarılı",
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      ...authData,
     });
   } catch (error) {
     res.status(500).json({ message: "Kayıt sırasında hata oluştu", error: error.message });
@@ -69,39 +86,70 @@ const login = async (req, res) => {
       return res.status(401).json({ message: "Şifre yanlış" });
     }
 
-    const token = createToken(user);
+    const authData = await buildAuthResponse(user);
 
     res.status(200).json({
       message: "Giriş başarılı",
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      ...authData,
     });
   } catch (error) {
     res.status(500).json({ message: "Giriş sırasında hata oluştu", error: error.message });
   }
 };
 
-const logout = async (req, res) => {
+const refreshToken = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
+    const { refreshToken: clientRefreshToken, userId } = req.body;
 
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const token = authHeader.split(" ")[1];
-      await redisService.blacklistToken(token);
+    if (!clientRefreshToken || !userId) {
+      return res.status(401).json({ message: "Refresh token gerekli" });
     }
 
+    const storedToken = await refreshTokenService.getRefreshToken(userId);
+
+    if (!storedToken) {
+      return res.status(401).json({ message: "Refresh token bulunamadı" });
+    }
+
+    if (storedToken !== clientRefreshToken) {
+      return res.status(403).json({ message: "Refresh token geçersiz" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(401).json({ message: "Kullanıcı bulunamadı" });
+    }
+
+    const accessToken = createAccessToken(user);
+
+    res.status(200).json({
+      message: "Access token yenilendi",
+      accessToken,
+      token: accessToken,
+    });
+  } catch (error) {
+    res.status(503).json({
+      message: "Token yenilenemedi",
+      error: error.message,
+    });
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    await refreshTokenService.deleteRefreshToken(req.user.id);
     res.status(200).json({ message: "Çıkış başarılı" });
   } catch (error) {
-    res.status(500).json({ message: "Çıkış sırasında hata oluştu", error: error.message });
+    res.status(503).json({
+      message: "Çıkış sırasında hata oluştu",
+      error: error.message,
+    });
   }
 };
 
 module.exports = {
   register,
   login,
+  refreshToken,
   logout,
 };

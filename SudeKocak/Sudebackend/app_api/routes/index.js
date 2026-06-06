@@ -10,7 +10,7 @@ const ratingController = require("../controllers/ratings");
 const recipesController = require("../controllers/recipes");
 const commentsController = require("../controllers/comments");
 const messagesController = require("../controllers/messagesController");
-const cacheController = require("../controllers/cacheController");
+const searchController = require("../controllers/searchController");
 
 
 // Middleware
@@ -26,7 +26,6 @@ router.get("/recipes/my", authMiddleware, recipesController.getMyRecipes);
 router.post("/recipes", authMiddleware, recipesController.addRecipe);
 router.get("/recipes", recipesController.getAllRecipes);
 router.get("/recipes/search", recipesController.searchRecipes);
-router.get("/recipes/autocomplete", recipesController.autocompleteRecipes);
 router.get("/recipes/category/list", recipesController.getRecipesByCategory);
 router.get("/recipes/:recipeId", optionalAuth, recipesController.getRecipeById);
 router.put("/recipes/:recipeId", authMiddleware, recipesController.updateRecipe);
@@ -50,7 +49,13 @@ router.delete("/recipes/:recipeId/video", authMiddleware, recipesController.dele
 // ==================== AUTH ====================
 router.post("/auth/register", authController.register);
 router.post("/auth/login", authController.login);
-router.post("/auth/logout", authController.logout);
+router.post("/auth/refresh-token", authController.refreshToken);
+router.post("/auth/logout", authMiddleware, authController.logout);
+
+// ==================== SEARCH ====================
+router.get("/search/recipes", authMiddleware, searchController.searchRecipes);
+router.get("/search/last-searches", authMiddleware, searchController.getLastSearches);
+router.delete("/search/last-searches", authMiddleware, searchController.clearLastSearches);
 
 // ==================== USERS ====================
 router.get("/users/:userId", authMiddleware, userController.getProfile);
@@ -66,12 +71,6 @@ router.post("/ratings", authMiddleware, ratingController.upsertRating);
 // ==================== MESSAGES (RabbitMQ test) ====================
 router.get("/messages/status", messagesController.getStatus);
 router.post("/messages/test", messagesController.sendTestMessage);
-
-// ==================== CACHE (Redis test) ====================
-router.get("/redis-test", cacheController.runTest);
-router.get("/cache/status", cacheController.getStatus);
-router.post("/cache", cacheController.setValue);
-router.get("/cache/:key", cacheController.getValue);
 
 
 module.exports = router;

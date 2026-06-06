@@ -7,10 +7,7 @@ const getRedisUrl = () => {
     return process.env.REDIS_URL;
   }
 
-  const host = process.env.REDIS_HOST || "redis";
-  const port = process.env.REDIS_PORT || "6379";
-
-  return `redis://${host}:${port}`;
+  return "redis://localhost:6379";
 };
 
 const connect = async () => {
@@ -21,12 +18,6 @@ const connect = async () => {
   await client.connect();
   console.log("Redis baglantisi basarili");
   return client;
-};
-
-const set = async (key, value) => {
-  const c = await connect();
-  const payload = typeof value === "string" ? value : JSON.stringify(value);
-  await c.set(key, payload);
 };
 
 const setWithTTL = async (key, value, ttlSeconds) => {
@@ -40,30 +31,47 @@ const get = async (key) => {
   return c.get(key);
 };
 
-const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
-const blacklistKey = (token) => `blacklist:${token}`;
-
-const blacklistToken = async (token) => {
-  await setWithTTL(blacklistKey(token), "1", JWT_EXPIRY_SECONDS);
+const del = async (key) => {
+  const c = await connect();
+  await c.del(key);
 };
 
-const isTokenBlacklisted = async (token) => {
-  try {
-    const value = await get(blacklistKey(token));
-    return value !== null;
-  } catch {
-    return false;
-  }
+const lPush = async (key, value) => {
+  const c = await connect();
+  await c.lPush(key, value);
+};
+
+const lRem = async (key, count, value) => {
+  const c = await connect();
+  await c.lRem(key, count, value);
+};
+
+const lTrim = async (key, start, stop) => {
+  const c = await connect();
+  await c.lTrim(key, start, stop);
+};
+
+const lRange = async (key, start, stop) => {
+  const c = await connect();
+  return c.lRange(key, start, stop);
+};
+
+const expire = async (key, ttlSeconds) => {
+  const c = await connect();
+  await c.expire(key, ttlSeconds);
 };
 
 const isConnected = () => Boolean(client?.isOpen);
 
 module.exports = {
   connect,
-  set,
   setWithTTL,
   get,
-  blacklistToken,
-  isTokenBlacklisted,
+  del,
+  lPush,
+  lRem,
+  lTrim,
+  lRange,
+  expire,
   isConnected,
 };

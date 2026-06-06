@@ -7,7 +7,6 @@ const cors = require("cors");
 const routes = require("./app_api/routes/index");
 const rabbitmqService = require("./app_api/services/rabbitmqService");
 const redisService = require("./app_api/services/redisService");
-const recipeAutocompleteService = require("./app_api/services/recipeAutocompleteService");
 
 const app = express();
 
@@ -49,7 +48,6 @@ async function startRabbitMQ() {
 async function startRedis() {
   try {
     await redisService.connect();
-    await recipeAutocompleteService.rebuildCache();
   } catch (err) {
     console.log("Redis baglantisi kurulamadi:", err.message);
   }
