@@ -13,7 +13,13 @@ const getRedisUrl = () => {
 const connect = async () => {
   if (client?.isOpen) return client;
 
-  client = createClient({ url: getRedisUrl() });
+  client = createClient({
+    url: getRedisUrl(),
+    socket: {
+      connectTimeout: 5000,
+      reconnectStrategy: (retries) => (retries > 2 ? false : Math.min(retries * 500, 2000)),
+    },
+  });
   client.on("error", (err) => console.log("Redis hatasi:", err.message));
   await client.connect();
   console.log("Redis baglantisi basarili");
