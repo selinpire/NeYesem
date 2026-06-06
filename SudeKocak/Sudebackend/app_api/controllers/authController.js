@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const redisService = require("../services/redisService");
 
 const createToken = (user) => {
   return jwt.sign(
@@ -86,7 +87,14 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    res.status(200).json({ message: "Çıkış başarılı, istemci tarafında token silinmeli" });
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      await redisService.blacklistToken(token);
+    }
+
+    res.status(200).json({ message: "Çıkış başarılı" });
   } catch (error) {
     res.status(500).json({ message: "Çıkış sırasında hata oluştu", error: error.message });
   }

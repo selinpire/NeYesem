@@ -26,6 +26,7 @@ router.get("/recipes/my", authMiddleware, recipesController.getMyRecipes);
 router.post("/recipes", authMiddleware, recipesController.addRecipe);
 router.get("/recipes", recipesController.getAllRecipes);
 router.get("/recipes/search", recipesController.searchRecipes);
+router.get("/recipes/autocomplete", recipesController.autocompleteRecipes);
 router.get("/recipes/category/list", recipesController.getRecipesByCategory);
 router.get("/recipes/:recipeId", optionalAuth, recipesController.getRecipeById);
 router.put("/recipes/:recipeId", authMiddleware, recipesController.updateRecipe);

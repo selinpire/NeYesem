@@ -5,6 +5,7 @@ const Favorite = require("../models/favorite");
 const { getSummaryForRecipeId, attachSummaries } = require("../utils/recipeRatingStats");
 const { toPublicComments } = require("../utils/commentPublic");
 const { getCalorieAnalysis } = require("../services/aiService");
+const recipeAutocompleteService = require("../services/recipeAutocompleteService");
 
 const ALLOWED_RECIPE_UPDATE_FIELDS = [
   "title",
@@ -142,6 +143,7 @@ const addRecipe = async (req, res) => {
     recipeData.videoUrl = nv.url;
 
     const recipe = await Recipe.create(recipeData);
+    await recipeAutocompleteService.rebuildCache();
     createResponse(res, 201, {
       message: "Tarif başarıyla oluşturuldu.",
       recipe,
@@ -261,6 +263,10 @@ const updateRecipe = async (req, res) => {
     Object.assign(recipe, payload);
     await recipe.save({ validateModifiedOnly: true });
 
+    if (Object.prototype.hasOwnProperty.call(payload, "title")) {
+      await recipeAutocompleteService.rebuildCache();
+    }
+
     createResponse(res, 200, {
       message: "Tarif başarıyla güncellendi.",
       recipe,
@@ -293,6 +299,7 @@ const deleteRecipe = async (req, res) => {
       Favorite.deleteMany({ recipe: recipeId }),
     ]);
     await Recipe.findByIdAndDelete(recipeId);
+    await recipeAutocompleteService.rebuildCache();
 
     createResponse(res, 200, {
       message: "Tarif başarıyla silindi.",
@@ -321,6 +328,24 @@ const searchRecipes = async (req, res) => {
   } catch (error) {
     createResponse(res, 400, {
       message: "Arama yapılamadı.",
+      error: error.message,
+    });
+  }
+};
+
+const autocompleteRecipes = async (req, res) => {
+  try {
+    const q = req.query.q || "";
+
+    if (!q.trim()) {
+      return createResponse(res, 200, { suggestions: [] });
+    }
+
+    const suggestions = await recipeAutocompleteService.getSuggestions(q);
+    createResponse(res, 200, { suggestions });
+  } catch (error) {
+    createResponse(res, 500, {
+      message: "Autocomplete önerileri alınamadı.",
       error: error.message,
     });
   }
@@ -415,6 +440,7 @@ module.exports = {
   updateRecipe,
   deleteRecipe,
   searchRecipes,
+  autocompleteRecipes,
   getRecipesByCategory,
   addVideo,
   deleteVideo

@@ -40,6 +40,22 @@ const get = async (key) => {
   return c.get(key);
 };
 
+const JWT_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+const blacklistKey = (token) => `blacklist:${token}`;
+
+const blacklistToken = async (token) => {
+  await setWithTTL(blacklistKey(token), "1", JWT_EXPIRY_SECONDS);
+};
+
+const isTokenBlacklisted = async (token) => {
+  try {
+    const value = await get(blacklistKey(token));
+    return value !== null;
+  } catch {
+    return false;
+  }
+};
+
 const isConnected = () => Boolean(client?.isOpen);
 
 module.exports = {
@@ -47,5 +63,7 @@ module.exports = {
   set,
   setWithTTL,
   get,
+  blacklistToken,
+  isTokenBlacklisted,
   isConnected,
 };
