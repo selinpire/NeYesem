@@ -4,7 +4,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { toggleFavorite } from "../services/favoriteService";
-import { getApiErrorMessage } from "../utils/errors";
+import { getApiErrorMessage, isAuthError } from "../utils/errors";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
@@ -39,7 +39,9 @@ export function FavoriteButton({ recipeId, favorited, onChange }: Props) {
       const data = await toggleFavorite(recipeId);
       onChange?.(Boolean(data.favorited));
     } catch (error) {
-      Alert.alert("Hata", getApiErrorMessage(error, "Favori islemi yapilamadi."));
+      if (!isAuthError(error)) {
+        Alert.alert("Hata", getApiErrorMessage(error, "Favori islemi yapilamadi."));
+      }
     } finally {
       setLoading(false);
     }

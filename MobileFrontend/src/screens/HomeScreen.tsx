@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { AppButton } from "../components/AppButton";
 import { RecipeCard } from "../components/RecipeCard";
 import { StateView } from "../components/StateView";
 import { RootStackParamList } from "../navigation/types";
@@ -9,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import { getFavorites, buildFavoriteRecipeIdSet } from "../services/favoriteService";
 import { getAllRecipes } from "../services/recipeService";
 import { Recipe } from "../types";
-import { getApiErrorMessage } from "../utils/errors";
+import { getApiErrorMessage, isAuthError } from "../utils/errors";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 
@@ -20,19 +21,34 @@ export function HomeScreen() {
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setError("");
-      const [allRecipes, favorites] = await Promise.all([
-        getAllRecipes(),
-        user ? getFavorites() : Promise.resolve([]),
-      ]);
+      setSessionExpired(false);
+
+      const allRecipes = await getAllRecipes();
       setRecipes(Array.isArray(allRecipes) ? allRecipes.slice(0, FEATURED_COUNT) : []);
-      setFavoriteIds(buildFavoriteRecipeIdSet(favorites));
+
+      if (user) {
+        try {
+          const favorites = await getFavorites();
+          setFavoriteIds(buildFavoriteRecipeIdSet(favorites));
+        } catch (err) {
+          if (isAuthError(err)) {
+            setFavoriteIds(new Set());
+            setSessionExpired(true);
+          }
+        }
+      } else {
+        setFavoriteIds(new Set());
+      }
     } catch (err) {
-      setError(getApiErrorMessage(err, "Tarifler yuklenemedi."));
+      if (!isAuthError(err)) {
+        setError(getApiErrorMessage(err, "Tarifler yuklenemedi."));
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -71,6 +87,15 @@ export function HomeScreen() {
       </View>
 
       {loading ? <StateView title="Tarifler yukleniyor..." loading /> : null}
+      {!loading && sessionExpired ? (
+        <View style={styles.sessionCard}>
+          <StateView
+            title="Oturum suresi doldu"
+            description="Favorilerinizi gormek ve islem yapmak icin tekrar giris yapin."
+          />
+          <AppButton title="Giris Yap" onPress={() => navigation.navigate("Login")} />
+        </View>
+      ) : null}
       {!loading && error ? <StateView title={error} /> : null}
       {!loading && !error && recipes.length === 0 ? (
         <StateView title="Henuz tarif yok" description="Ilk tarifi eklemek icin yeni tarif ekranina gecebilirsiniz." />
@@ -144,5 +169,9 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     color: colors.textSecondary,
+  },
+  sessionCard: {
+    gap: spacing.md,
+    marginBottom: spacing.md,
   },
 });

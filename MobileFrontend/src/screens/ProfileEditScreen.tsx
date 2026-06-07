@@ -8,7 +8,7 @@ import { StateView } from "../components/StateView";
 import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/types";
 import { getProfile, updateProfile } from "../services/userService";
-import { getApiErrorMessage } from "../utils/errors";
+import { getApiErrorMessage, isAuthError } from "../utils/errors";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 
@@ -37,7 +37,9 @@ export function ProfileEditScreen({
         setBio(profile.bio || "");
         setProfileImage(profile.profileImage || "");
       } catch (err) {
-        setError(getApiErrorMessage(err, "Profil yuklenemedi."));
+        if (!isAuthError(err)) {
+          setError(getApiErrorMessage(err, "Profil yuklenemedi."));
+        }
       } finally {
         setLoading(false);
       }

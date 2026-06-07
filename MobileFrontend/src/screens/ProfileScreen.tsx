@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/types";
 import { deleteAccount, getProfile } from "../services/userService";
 import { UserProfile } from "../types";
-import { getApiErrorMessage } from "../utils/errors";
+import { getApiErrorMessage, isAuthError } from "../utils/errors";
 import { colors } from "../theme/colors";
 import { radius, spacing } from "../theme/spacing";
 
@@ -29,7 +29,9 @@ export function ProfileScreen() {
       const data = await getProfile(user.id);
       setProfile(data);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Profil yuklenemedi."));
+      if (!isAuthError(err)) {
+        setError(getApiErrorMessage(err, "Profil yuklenemedi."));
+      }
     } finally {
       setLoading(false);
     }

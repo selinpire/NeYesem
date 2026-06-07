@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/types";
 import { getFavorites } from "../services/favoriteService";
 import { FavoriteItem, Recipe } from "../types";
-import { getApiErrorMessage } from "../utils/errors";
+import { getApiErrorMessage, isAuthError } from "../utils/errors";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 
@@ -29,7 +29,9 @@ export function FavoritesScreen() {
       const data = await getFavorites();
       setFavorites(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Favoriler yuklenemedi."));
+      if (!isAuthError(err)) {
+        setError(getApiErrorMessage(err, "Favoriler yuklenemedi."));
+      }
     } finally {
       setLoading(false);
     }

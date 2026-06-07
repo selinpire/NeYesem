@@ -47,7 +47,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-secret}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-placeholder}
       PORT: ${PORT:-3000}
-      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
       mongodb:

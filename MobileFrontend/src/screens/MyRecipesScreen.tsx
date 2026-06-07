@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/types";
 import { deleteRecipe, getMyRecipes } from "../services/recipeService";
 import { Recipe } from "../types";
-import { getApiErrorMessage } from "../utils/errors";
+import { getApiErrorMessage, isAuthError } from "../utils/errors";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 
@@ -31,7 +31,9 @@ export function MyRecipesScreen({
       const data = await getMyRecipes();
       setRecipes(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Tarifler yuklenemedi."));
+      if (!isAuthError(err)) {
+        setError(getApiErrorMessage(err, "Tarifler yuklenemedi."));
+      }
     } finally {
       setLoading(false);
     }

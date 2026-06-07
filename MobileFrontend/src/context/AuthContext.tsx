@@ -1,6 +1,7 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { clearSession, getStoredSession, saveSession } from "../storage/authStorage";
-import { setApiToken } from "../services/api";
+import { setApiToken, setUnauthorizedHandler } from "../services/api";
+import { navigateToLogin } from "../navigation/navigationRef";
 import { AuthResponse, UserSummary } from "../types";
 
 type AuthContextValue = {
@@ -39,6 +40,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     hydrate();
     return () => {
       mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setUnauthorizedHandler(async () => {
+      setUser(null);
+      setToken(null);
+      setApiToken(null);
+      await clearSession();
+      navigateToLogin();
+    });
+
+    return () => {
+      setUnauthorizedHandler(null);
     };
   }, []);
 
