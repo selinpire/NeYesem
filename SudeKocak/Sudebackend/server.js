@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const routes = require("./app_api/routes/index");
-const rabbitmqService = require("./app_api/services/rabbitmqService");
+const eventConsumerService = require("./app_api/services/eventConsumerService");
 const redisService = require("./app_api/services/redisService");
 
 const app = express();
@@ -35,14 +35,7 @@ async function connectDB() {
 connectDB().catch((err) => console.log("İlk bağlantı hatası:", err.message));
 
 async function startRabbitMQ() {
-  try {
-    await rabbitmqService.connect();
-    await rabbitmqService.startConsumer((message) => {
-      console.log("RabbitMQ mesaji alindi:", message);
-    });
-  } catch (err) {
-    console.log("RabbitMQ baglantisi kurulamadi:", err.message);
-  }
+  await eventConsumerService.start();
 }
 
 async function startRedis() {

@@ -1,6 +1,7 @@
 const Favorite = require("../models/favorite");
 const Recipe = require("../models/recipe");
 const { attachSummaries } = require("../utils/recipeRatingStats");
+const { EVENT_TYPES, publishEvent } = require("../services/eventProducerService");
 
 const getFavorites = async (req, res) => {
   try {
@@ -47,9 +48,16 @@ const toggleFavorite = async (req, res) => {
       });
     }
 
-    await Favorite.create({ user: userId, recipe: recipeId });
+    const favorite = await Favorite.create({ user: userId, recipe: recipeId });
     recipe.favoritesCount = (recipe.favoritesCount || 0) + 1;
     await recipe.save();
+
+    publishEvent(EVENT_TYPES.FAVORITE_ADDED, {
+      userId,
+      favoriteId: favorite._id,
+      recipeId,
+      createdAt: favorite.createdAt?.toISOString(),
+    });
 
     return res.status(200).json({
       favorited: true,

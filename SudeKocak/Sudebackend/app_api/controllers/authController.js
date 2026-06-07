@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const refreshTokenService = require("../services/refreshTokenService");
+const { EVENT_TYPES, publishEvent } = require("../services/eventProducerService");
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -65,6 +66,12 @@ const register = async (req, res) => {
 
     const authData = await buildAuthResponse(user);
 
+    publishEvent(EVENT_TYPES.USER_REGISTERED, {
+      userId: user._id,
+      email: user.email,
+      createdAt: user.createdAt?.toISOString(),
+    });
+
     res.status(201).json({
       message: "Kayıt başarılı",
       ...authData,
@@ -93,6 +100,12 @@ const login = async (req, res) => {
     }
 
     const authData = await buildAuthResponse(user);
+
+    publishEvent(EVENT_TYPES.USER_LOGIN, {
+      userId: user._id,
+      email: user.email,
+      createdAt: new Date().toISOString(),
+    });
 
     res.status(200).json({
       message: "Giriş başarılı",

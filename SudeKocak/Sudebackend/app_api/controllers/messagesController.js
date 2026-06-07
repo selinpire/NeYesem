@@ -16,11 +16,17 @@ const sendTestMessage = async (req, res) => {
       sentAt: new Date().toISOString(),
     };
 
-    const result = await rabbitmqService.publishMessage(message);
+    const sent = await rabbitmqService.sendToQueue(message);
+
+    if (!sent) {
+      return res.status(503).json({
+        message: "RabbitMQ baglantisi kurulamadi",
+      });
+    }
 
     res.status(200).json({
       message: "Mesaj kuyruga gonderildi",
-      data: result.message,
+      data: message,
     });
   } catch (error) {
     res.status(503).json({

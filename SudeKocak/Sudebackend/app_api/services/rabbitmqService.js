@@ -6,47 +6,61 @@ let connection = null;
 let channel = null;
 
 const getRabbitUrl = () => {
-  if (process.env.RABBITMQ_URL) {
-    return process.env.RABBITMQ_URL;
-  }
-
-  const user = process.env.RABBITMQ_USER || "guest";
-  const pass = process.env.RABBITMQ_PASS || "guest";
-  const host = process.env.RABBITMQ_HOST || "rabbitmq";
-  const port = process.env.RABBITMQ_PORT || "5672";
-
-  return `amqp://${user}:${pass}@${host}:${port}`;
+  return (
+    process.env.RABBITMQ_URL ||
+    `amqp://${process.env.RABBITMQ_USER || "guest"}:${process.env.RABBITMQ_PASS || "guest"}@${process.env.RABBITMQ_HOST || "localhost"}:${process.env.RABBITMQ_PORT || "5672"}`
+  );
 };
 
 const connect = async () => {
   if (channel) return channel;
 
-  connection = await amqp.connect(getRabbitUrl());
-  channel = await connection.createChannel();
-  await channel.assertQueue(QUEUE_NAME, { durable: true });
-  console.log("RabbitMQ baglantisi basarili");
-  return channel;
+  try {
+    connection = await amqp.connect(getRabbitUrl());
+    channel = await connection.createChannel();
+    await channel.assertQueue(QUEUE_NAME, { durable: true });
+    console.log("RabbitMQ baglantisi basarili");
+    return channel;
+  } catch (err) {
+    console.log("RabbitMQ baglantisi kurulamadi:", err.message);
+    return null;
+  }
 };
 
-const publishMessage = async (message) => {
-  const ch = await connect();
-  const payload = Buffer.from(JSON.stringify(message));
+const sendToQueue = async (message) => {
+  try {
+    const ch = await connect();
+    if (!ch) return false;
 
-  ch.sendToQueue(QUEUE_NAME, payload, { persistent: true });
-
-  return { queue: QUEUE_NAME, message };
+    const payload = Buffer.from(JSON.stringify(message));
+    ch.sendToQueue(QUEUE_NAME, payload, { persistent: true });
+    return true;
+  } catch (err) {
+    console.log("RabbitMQ mesaj gonderilemedi:", err.message);
+    return false;
+  }
 };
 
 const startConsumer = async (onMessage) => {
-  const ch = await connect();
+  try {
+    const ch = await connect();
+    if (!ch) return;
 
-  await ch.consume(QUEUE_NAME, (msg) => {
-    if (!msg) return;
+    await ch.consume(QUEUE_NAME, (msg) => {
+      if (!msg) return;
 
-    const content = JSON.parse(msg.content.toString());
-    onMessage(content);
-    ch.ack(msg);
-  });
+      try {
+        const content = JSON.parse(msg.content.toString());
+        onMessage(content);
+      } catch (err) {
+        console.log("RabbitMQ mesaj islenemedi:", err.message);
+      }
+
+      ch.ack(msg);
+    });
+  } catch (err) {
+    console.log("RabbitMQ consumer baslatilamadi:", err.message);
+  }
 };
 
 const isConnected = () => channel !== null;
@@ -54,7 +68,7 @@ const isConnected = () => channel !== null;
 module.exports = {
   QUEUE_NAME,
   connect,
-  publishMessage,
+  sendToQueue,
   startConsumer,
   isConnected,
 };
